@@ -1,0 +1,49 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Rol {
+  PACIENTE
+  PROFESIONAL
+  RECEPCIONISTA
+  ADMIN
+}
+
+enum EstadoUsuario {
+  ACTIVO
+  INACTIVO
+}
+
+model Persona {
+  id_persona       Int       @id @default(autoincrement())
+  dni              String    @unique @db.VarChar(20)
+  nombre           String    @db.VarChar(100)
+  apellido         String    @db.VarChar(100)
+  telefono         String?   @db.VarChar(50)
+  email            String    @unique @db.VarChar(150)
+  fecha_nacimiento DateTime  @db.Date
+  creado_en        DateTime  @default(now())
+  actualizado_en   DateTime  @updatedAt
+  usuario          Usuario?
+
+  @@map("personas")
+}
+
+model Usuario {
+  id_usuario     Int           @id @default(autoincrement())
+  id_persona     Int           @unique
+  password_hash  String        @db.VarChar(255)
+  rol            Rol           @default(PACIENTE)
+  estado         EstadoUsuario @default(ACTIVO)
+  creado_en      DateTime      @default(now())
+  actualizado_en DateTime      @updatedAt
+
+  persona Persona @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
+
+  @@map("usuarios")
+}

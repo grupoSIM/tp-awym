@@ -1,0 +1,54 @@
+version: 1
+project: "tp-awym-gemini"
+status: in_progress
+
+features:
+  - id: feat-001
+    name: Scaffolding base y autenticación de usuarios
+    status: done
+    priority: must
+    depends_on: []
+
+  - id: feat-002
+    name: Gestión de pacientes (alta, modificación, baja lógica, consulta)
+    status: proposed
+    priority: must
+    depends_on:
+      - feat-001
+
+  - id: feat-003
+    name: Gestión de profesionales y especialidades médicas
+    status: proposed
+    priority: must
+    depends_on:
+      - feat-001
+
+  - id: feat-004
+    name: Gestión de consultorios y configuración de agendas médicas
+    status: proposed
+    priority: must
+    depends_on:
+      - feat-003
+
+  - id: feat-005
+    name: Consulta de disponibilidad y reserva de turnos médicos
+    status: proposed
+    priority: must
+    depends_on:
+      - feat-002
+      - feat-004
+
+  - id: feat-006
+    name: Cancelación, reprogramación e historial de turnos
+    status: proposed
+    priority: must
+    depends_on:
+      - feat-005
+
+  - id: feat-007
+    name: Reportes e indicadores de gestión y ausentismo
+    status: proposed
+    priority: should
+    depends_on:
+      - feat-005
+      - feat-006

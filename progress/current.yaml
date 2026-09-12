@@ -1,0 +1,66 @@
+project: "tp-awym-gemini"
+active_feature: feat-001
+phase: done
+updated_at: "2026-09-12"
+
+blockers: []
+risks: []
+decisions: []
+
+approvals:
+  architecture:
+    applicability: required
+    rationale: "Selección de stack, estructura monorepo, autenticación segura y persistencia según ADR-001 a ADR-004."
+    status: approved
+    approved_by: "José Chamorro"
+    approved_at: "2026-09-12T19:55:32-03:00"
+    reference: "docs/decisions.md"
+  specification:
+    status: approved
+    approved_by: "José Chamorro"
+    approved_at: "2026-09-12T19:55:32-03:00"
+    reference: "specs/features/feat-001/spec-review.md"
+    bundle:
+      algorithm: sha256
+      digest: 4df493a099d45d8c85f7fc1ba877ca24e0d4f35d827587cd8255e6cbdbe4ce17
+      files:
+        - path: specs/features/feat-001/acceptance.md
+          bytes: 2340
+          sha256: ee12a05565dea0c73ec12714d09b68aa0e82697f4edc500f31d3a8c8e2fbe223
+        - path: specs/features/feat-001/design.md
+          bytes: 3830
+          sha256: e02a09612d82a3b12398cc18bdc42831f56795584866a142e4495de99dd63411
+        - path: specs/features/feat-001/requirements.md
+          bytes: 2824
+          sha256: 5bea0628052b6ebc44514412e41425824b9c7791b9e8f90eeae3f1bd2676df8c
+        - path: specs/features/feat-001/tasks.md
+          bytes: 1218
+          sha256: 0f95aede9442434a126196885bef24912bcbe1b75e07cdc62fcb8cc4d3cf470e
+        - path: specs/features/feat-001/test-plan.md
+          bytes: 2556
+          sha256: 198bf5feb1fe15c416c98cbdb5bba390c9caee28462bb6535d2133d924bb7896
+    review:
+      status: pass
+      reviewed_by: "tech-reviewer"
+      reviewed_at: "2026-09-12T19:50:00-03:00"
+      reference: "specs/features/feat-001/spec-review.md"
+      specification_digest: 4df493a099d45d8c85f7fc1ba877ca24e0d4f35d827587cd8255e6cbdbe4ce17
+  publication:
+    status: approved
+    approved_by: "José Chamorro"
+    approved_at: "2026-09-12T20:30:10-03:00"
+    reference: "specs/features/feat-001/evidence.md"
+
+execution:
+  implemented_by: "antigravity-developer"
+
+quality:
+  status: pass
+  reviewed_by: "qa-verifier"
+  reviewed_at: "2026-09-12T20:09:40-03:00"
+  reference: "specs/features/feat-001/evidence.md"
+  specification_digest: "4df493a099d45d8c85f7fc1ba877ca24e0d4f35d827587cd8255e6cbdbe4ce17"
+  evidence: "specs/features/feat-001/evidence.md"
+
+notes:
+  - Instancia nueva; iniciar discovery antes de seleccionar arquitectura.

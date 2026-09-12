@@ -1,0 +1,57 @@
+version: 1
+project: "tp-awym-gemini"
+
+states: [proposed, discovery, specification, spec_review, approved, implementation, verification, publication_review, done, blocked]
+
+transitions:
+  proposed: [discovery]
+  discovery: [specification, blocked]
+  specification: [spec_review, blocked]
+  spec_review: [approved, specification, blocked]
+  approved: [implementation, specification]
+  implementation: [verification, blocked, specification]
+  verification: [publication_review, implementation, blocked, specification]
+  publication_review: [done, implementation, blocked, specification]
+  blocked: [discovery, specification, spec_review, approved, implementation, verification, publication_review]
+  done: []
+
+blocking:
+  codes: [needs-human-decision, external-dependency, blocked-by-architecture, needs-more-discovery, verification-failed, change-approval-required]
+
+decision_validation:
+  legacy_ids: []
+
+human_gates:
+  approval_mode: never
+  architecture:
+    required_when: [stack_not_decided, external_provider_added, money_flow_changed, authentication_changed, sensitive_data_changed, destructive_migration]
+    validation_enabled: true
+    required_in: [approved, implementation, verification, publication_review, done]
+  specification:
+    required: true
+    required_in: [implementation, verification, publication_review, done]
+  publication:
+    required: true
+    required_in: [done]
+
+definition_of_ready: [bounded_scope, stable_ids, testable_acceptance, resolved_dependencies, security_and_data_impact, test_plan]
+definition_of_done: [tasks_complete, acceptance_has_evidence, quality_passes, security_review_passes, contracts_match, migration_notes, docs_current, publication_approved]
+
+publication:
+  auto_commit: false
+  auto_push: false
+  force_push: forbidden
+  conventional_commits: true
+
+validation:
+  phase_rules:
+    proposed: { required_artifacts: [] }
+    discovery: { required_artifacts: [] }
+    specification: { required_artifacts: [requirements.md] }
+    spec_review: { required_artifacts: [requirements.md, design.md, acceptance.md, tasks.md, test-plan.md] }
+    approved: { required_artifacts: [requirements.md, design.md, acceptance.md, tasks.md, test-plan.md, spec-review.md] }
+    implementation: { required_artifacts: [requirements.md, design.md, acceptance.md, tasks.md, test-plan.md, spec-review.md, evidence.md] }
+    verification: { required_artifacts: [requirements.md, design.md, acceptance.md, tasks.md, test-plan.md, spec-review.md, evidence.md] }
+    publication_review: { required_artifacts: [requirements.md, design.md, acceptance.md, tasks.md, test-plan.md, spec-review.md, evidence.md] }
+    done: { required_artifacts: [requirements.md, design.md, acceptance.md, tasks.md, test-plan.md, spec-review.md, evidence.md] }
+    blocked: { required_artifacts: [] }

@@ -1,0 +1,78 @@
+<div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+  <div class="row justify-content-center w-100">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4 p-md-5">
+          <div class="text-center mb-4">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+              <span class="fs-2">⚕</span>
+            </div>
+            <h2 class="h4 fw-bold text-primary mb-1">Gestión de Turnos</h2>
+            <p class="text-muted small">Acceda al sistema médico con sus credenciales</p>
+          </div>
+
+          @if (errorMessage) {
+            <div class="alert alert-danger py-2 px-3 small d-flex align-items-center" role="alert">
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="dni" class="form-label fw-semibold small">DNI / Documento</label>
+              <input
+                type="text"
+                id="dni"
+                class="form-control form-control-lg fs-6"
+                formControlName="dni"
+                placeholder="Ej. 35123456"
+                [class.is-invalid]="dniInvalid"
+              />
+              @if (dniInvalid) {
+                <div class="invalid-feedback small">
+                  El DNI es obligatorio y debe contener solo números.
+                </div>
+              }
+            </div>
+
+            <div class="mb-4">
+              <label for="password" class="form-label fw-semibold small">Contraseña</label>
+              <input
+                type="password"
+                id="password"
+                class="form-control form-control-lg fs-6"
+                formControlName="password"
+                placeholder="••••••••"
+                [class.is-invalid]="passwordInvalid"
+              />
+              @if (passwordInvalid) {
+                <div class="invalid-feedback small">
+                  La contraseña es obligatoria.
+                </div>
+              }
+            </div>
+
+            <button
+              type="submit"
+              class="btn btn-primary btn-lg w-100 fs-6 fw-semibold py-2"
+              [disabled]="loading || loginForm.invalid"
+            >
+              @if (loading) {
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Iniciando sesión...
+              } @else {
+                Ingresar
+              }
+            </button>
+          </form>
+
+          <div class="text-center mt-4">
+            <p class="text-muted small mb-0">
+              Centro de Salud Integral &bull; Sistema Web y Móvil
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

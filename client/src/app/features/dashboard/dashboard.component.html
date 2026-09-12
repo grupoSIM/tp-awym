@@ -1,0 +1,112 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" [routerLink]="dashboardRoute" role="button">
+      <span>⚕</span>
+      <span>Gestión de Turnos</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+      @if (user) {
+        <div class="text-white text-end d-none d-sm-block">
+          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
+          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
+        </div>
+      }
+      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="p-4 bg-white rounded-4 shadow-sm border-0">
+        <h1 class="h3 fw-bold text-dark mb-1">
+          Bienvenido, {{ user?.nombre }} {{ user?.apellido }}
+        </h1>
+        <p class="text-muted mb-0">
+          Panel de control &bull; Rol activo: <strong class="text-primary">{{ user?.rol }}</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    @if (user?.rol === 'PACIENTE') {
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Mis Turnos</h5>
+            <p class="card-text text-muted small">Consulte sus turnos reservados y su historial de atenciones.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Ver historial</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Solicitar Turno</h5>
+            <p class="card-text text-muted small">Reserve un turno médico con profesionales disponibles.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Nuevo turno</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (user?.rol === 'PROFESIONAL') {
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Agenda del Día</h5>
+            <p class="card-text text-muted small">Visualice los turnos agendados y pacientes en espera.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Ver agenda</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (user?.rol === 'RECEPCIONISTA' || user?.rol === 'ADMIN') {
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Gestión de Pacientes</h5>
+            <p class="card-text text-muted small">Alta, modificación y consulta de pacientes y cobertura médica.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Pacientes</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Gestión de Turnos</h5>
+            <p class="card-text text-muted small">Asignar, confirmar, cancelar y reprogramar turnos.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Turnos</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (user?.rol === 'ADMIN') {
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Agendas y Consultorios</h5>
+            <p class="card-text text-muted small">Configurar disponibilidad, horarios y consultorios físicos.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Configurar</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Reportes de Gestión</h5>
+            <p class="card-text text-muted small">Estadísticas de ocupación, cancelaciones y ausentismo.</p>
+            <button class="btn btn-outline-secondary btn-sm" disabled>Reportes</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</main>

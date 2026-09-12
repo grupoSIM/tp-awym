@@ -1,0 +1,75 @@
+schema: 1
+events:
+  - id: MIG-001
+    kind: migration
+    feature: feat-001
+    from: null
+    to: discovery
+    occurred_at: "2026-01-01T00:00:00Z"
+    actor: template-bootstrap
+    reference: template-initial-state
+    prior_history: unknown
+    note: "Instancia nueva; no existe historia previa."
+  - id: TRN-002
+    kind: transition
+    feature: 'feat-001'
+    from: 'discovery'
+    to: 'specification'
+    occurred_at: '2026-09-12T19:49:04.3893527-03:00'
+    actor: 'José Chamorro'
+    reference: 'docs/specification.md'
+    gate_references: []
+  - id: TRN-003
+    kind: transition
+    feature: 'feat-001'
+    from: 'specification'
+    to: 'spec_review'
+    occurred_at: '2026-09-12T19:49:50.7303644-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-001'
+    gate_references: []
+  - id: TRN-004
+    kind: transition
+    feature: 'feat-001'
+    from: 'spec_review'
+    to: 'approved'
+    occurred_at: '2026-09-12T19:55:57.4521229-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-001/spec-review.md'
+    gate_references: ['approvals.architecture']
+  - id: TRN-005
+    kind: transition
+    feature: 'feat-001'
+    from: 'approved'
+    to: 'implementation'
+    occurred_at: '2026-09-12T19:56:18.7192905-03:00'
+    actor: 'José Chamorro'
+    reference: 'progress/current.yaml'
+    gate_references: ['approvals.specification', 'approvals.architecture']
+  - id: TRN-006
+    kind: transition
+    feature: 'feat-001'
+    from: 'implementation'
+    to: 'verification'
+    occurred_at: '2026-09-12T20:09:52.9464243-03:00'
+    actor: 'qa-verifier'
+    reference: 'specs/features/feat-001/evidence.md'
+    gate_references: ['approvals.specification', 'approvals.architecture']
+  - id: TRN-007
+    kind: transition
+    feature: 'feat-001'
+    from: 'verification'
+    to: 'publication_review'
+    occurred_at: '2026-09-12T20:10:09.7774466-03:00'
+    actor: 'qa-verifier'
+    reference: 'specs/features/feat-001/evidence.md'
+    gate_references: ['approvals.specification', 'approvals.architecture']
+  - id: TRN-008
+    kind: transition
+    feature: 'feat-001'
+    from: 'publication_review'
+    to: 'done'
+    occurred_at: '2026-09-12T20:30:43.5006544-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-001/evidence.md'
+    gate_references: ['approvals.specification', 'approvals.publication', 'approvals.architecture']

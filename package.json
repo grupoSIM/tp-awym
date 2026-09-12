@@ -1,0 +1,14 @@
+{
+  "name": "tp-awym-gemini",
+  "version": "1.0.0",
+  "description": "Sistema de Gestion de Turnos Medicos",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "test": "npm run test --prefix server && npm run test:ci --prefix client",
+    "test:server": "npm run test --prefix server",
+    "test:client": "npm run test:ci --prefix client",
+    "server": "npm run dev --prefix server",
+    "client": "npm run start --prefix client"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "YamlDotNet",
+  "version": "18.1.0",
+  "asset": "lib/netstandard2.0/YamlDotNet.dll",
+  "license": "MIT",
+  "packageUrl": "https://www.nuget.org/packages/YamlDotNet/18.1.0",
+  "sourceRepository": "https://github.com/aaubry/YamlDotNet",
+  "sourceCommit": "748334a8fa7c227740018b284b71ad95cc6b7fc7",
+  "packageSha512": "b9ec6e231b7b90819a5a5a7e2a3e554ed10012205f9712e890b69fa57f570d029bda369375d8a894b9476c571766b985c5eeaf6b474bae9bb9d47b594274abce",
+  "assetSha256": "91cd6d1fd0ae5b64bf6b252eb3b1af2382cbc599c29045427c45fe8403d4295d",
+  "assetBytes": 298496,
+  "dependencies": []
+}
