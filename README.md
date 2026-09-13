@@ -41,8 +41,8 @@ El proyecto está organizado bajo una estructura de **Monorepo**:
 
 ### 1. Clonar el repositorio
 ```bash
-git clone <url-del-repositorio>
-cd tp-awym-gemini
+git clone https://github.com/grupoSIM/tp-awym.git
+cd tp-awym
 ```
 
 ### 2. Iniciar la Base de Datos con Docker
