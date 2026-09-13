@@ -68,6 +68,16 @@ async function main() {
             estado: EstadoUsuario.ACTIVO,
           },
         },
+        ...(u.rol === Rol.PACIENTE
+          ? {
+              paciente: {
+                create: {
+                  obra_social: 'OSDE 210',
+                  activo: true,
+                },
+              },
+            }
+          : {}),
       },
     });
   }

@@ -5,3 +5,37 @@ body {
   background-color: #f8f9fa;
   min-height: 100vh;
 }
+
+/* Accesibilidad: Enlace para saltar al contenido principal */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #0d6efd;
+  color: #ffffff;
+  padding: 8px 16px;
+  z-index: 1050;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 0 0 4px 0;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Indicador de foco visible de alto contraste (WCAG 2.4.7 / 2.4.11) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #0d6efd !important;
+  outline-offset: 2px !important;
+}
+
+/* Ajuste de contraste para textos atenuados (mínimo 4.5:1 sobre fondo claro) */
+.text-muted {
+  color: #595959 !important;
+}
+

@@ -26,8 +26,8 @@ Límites del sistema:
 
 ## Datos e integraciones
 
-- Modelo relacional compuesto por `PERSONA`, `USUARIO`, `PACIENTE`, `PROFESIONAL`, `ESPECIALIDAD`, `PROFESIONAL_ESPECIALIDAD`, `CONSULTORIO`, `AGENDA` y `TURNO`.
 - Separación de identidad civil (`PERSONA`) y credenciales (`USUARIO`), permitiendo que una persona cumpla roles clínicos y profesionales sin duplicar datos personales.
+- Autoservicio del paciente: la administración y edición de datos de contacto propios (teléfono, correo) por parte del usuario con rol `PACIENTE` forma parte integral del alcance de `feat-005` (Portal del paciente y reserva de turnos), mientras que la cobertura médica/obra social es administrada exclusivamente por el personal del centro de salud (recepcionista/administrador).
 - Sin dependencias de proveedores externos ni pasarelas de pago en esta fase.
 
 ## Despliegue y operación

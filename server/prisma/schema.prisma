@@ -30,8 +30,22 @@ model Persona {
   creado_en        DateTime  @default(now())
   actualizado_en   DateTime  @updatedAt
   usuario          Usuario?
+  paciente         Paciente?
 
   @@map("personas")
+}
+
+model Paciente {
+  id_paciente    Int      @id @default(autoincrement())
+  id_persona     Int      @unique
+  obra_social    String   @db.VarChar(100)
+  activo         Boolean  @default(true)
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  persona Persona @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
+
+  @@map("pacientes")
 }
 
 model Usuario {

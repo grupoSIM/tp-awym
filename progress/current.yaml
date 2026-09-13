@@ -1,5 +1,5 @@
 project: "tp-awym-gemini"
-active_feature: feat-001
+active_feature: feat-002
 phase: done
 updated_at: "2026-09-12"
 
@@ -10,46 +10,46 @@ decisions: []
 approvals:
   architecture:
     applicability: required
-    rationale: "Selección de stack, estructura monorepo, autenticación segura y persistencia según ADR-001 a ADR-004."
+    rationale: "Modelo de datos de salud (cobertura médica) bajo la arquitectura y seguridad aprobadas en ADR-001 a ADR-004."
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-12T19:55:32-03:00"
+    approved_at: "2026-09-12T20:43:46-03:00"
     reference: "docs/decisions.md"
   specification:
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-12T19:55:32-03:00"
-    reference: "specs/features/feat-001/spec-review.md"
+    approved_at: "2026-09-12T20:43:46-03:00"
+    reference: "specs/features/feat-002/spec-review.md"
     bundle:
       algorithm: sha256
-      digest: 4df493a099d45d8c85f7fc1ba877ca24e0d4f35d827587cd8255e6cbdbe4ce17
+      digest: 05ed41c4110e93cd65e0204880560c7a0a1c77e16842c59c9210b79dcd0dd23f
       files:
-        - path: specs/features/feat-001/acceptance.md
-          bytes: 2340
-          sha256: ee12a05565dea0c73ec12714d09b68aa0e82697f4edc500f31d3a8c8e2fbe223
-        - path: specs/features/feat-001/design.md
-          bytes: 3830
-          sha256: e02a09612d82a3b12398cc18bdc42831f56795584866a142e4495de99dd63411
-        - path: specs/features/feat-001/requirements.md
-          bytes: 2824
-          sha256: 5bea0628052b6ebc44514412e41425824b9c7791b9e8f90eeae3f1bd2676df8c
-        - path: specs/features/feat-001/tasks.md
-          bytes: 1218
-          sha256: 0f95aede9442434a126196885bef24912bcbe1b75e07cdc62fcb8cc4d3cf470e
-        - path: specs/features/feat-001/test-plan.md
-          bytes: 2556
-          sha256: 198bf5feb1fe15c416c98cbdb5bba390c9caee28462bb6535d2133d924bb7896
+        - path: specs/features/feat-002/acceptance.md
+          bytes: 2674
+          sha256: 96536e72b28faf04e42c0fc56035fa5f3a7cfbaec4ce5ad484defb5dd5104bdf
+        - path: specs/features/feat-002/design.md
+          bytes: 2922
+          sha256: 658bd204114147d4ea5f65c9ae3f2ae7b72fa24d61851dfc8ae0e9e3c5ca0dd9
+        - path: specs/features/feat-002/requirements.md
+          bytes: 3605
+          sha256: efb8346c9dd1525c0ce31b5b94ca0b2af0027d3404a5cd5dc544b2bf2b2884dd
+        - path: specs/features/feat-002/tasks.md
+          bytes: 1290
+          sha256: 706cd0577d51fdff44f2586bed295900070f22189805f0247f6f52c5c8bef2dc
+        - path: specs/features/feat-002/test-plan.md
+          bytes: 2596
+          sha256: 3982b7a496e15e8a85ad494d1e87bfde9f939ccaa5c80b48ffc57d684d23142b
     review:
       status: pass
       reviewed_by: "tech-reviewer"
-      reviewed_at: "2026-09-12T19:50:00-03:00"
-      reference: "specs/features/feat-001/spec-review.md"
-      specification_digest: 4df493a099d45d8c85f7fc1ba877ca24e0d4f35d827587cd8255e6cbdbe4ce17
+      reviewed_at: "2026-09-12T20:41:00-03:00"
+      reference: "specs/features/feat-002/spec-review.md"
+      specification_digest: 05ed41c4110e93cd65e0204880560c7a0a1c77e16842c59c9210b79dcd0dd23f
   publication:
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-12T20:30:10-03:00"
-    reference: "specs/features/feat-001/evidence.md"
+    approved_at: "2026-09-12T22:05:00-03:00"
+    reference: "specs/features/feat-002/evidence.md"
 
 execution:
   implemented_by: "antigravity-developer"
@@ -57,10 +57,9 @@ execution:
 quality:
   status: pass
   reviewed_by: "qa-verifier"
-  reviewed_at: "2026-09-12T20:09:40-03:00"
-  reference: "specs/features/feat-001/evidence.md"
-  specification_digest: "4df493a099d45d8c85f7fc1ba877ca24e0d4f35d827587cd8255e6cbdbe4ce17"
-  evidence: "specs/features/feat-001/evidence.md"
+  reviewed_at: "2026-09-12T20:52:00-03:00"
+  reference: "specs/features/feat-002/evidence.md"
+  specification_digest: 05ed41c4110e93cd65e0204880560c7a0a1c77e16842c59c9210b79dcd0dd23f
 
 notes:
-  - Instancia nueva; iniciar discovery antes de seleccionar arquitectura.
+  - Aprobaciones de arquitectura y especificacion registradas para feat-002.

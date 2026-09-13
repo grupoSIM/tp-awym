@@ -1,0 +1,149 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
+      <span>⚕</span>
+      <span>Gestión de Turnos</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+      @if (user) {
+        <div class="text-white text-end d-none d-sm-block">
+          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
+          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
+        </div>
+      }
+      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content" class="container py-4">
+  <nav aria-label="Ruta de navegación" class="mb-3">
+    <ol class="breadcrumb mb-0 small">
+      <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Pacientes</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold text-dark mb-1">Gestión de Pacientes</h1>
+      <p class="text-muted small mb-0">Administre el catálogo de pacientes y su cobertura médica</p>
+    </div>
+    <a routerLink="/pacientes/nuevo" class="btn btn-primary d-inline-flex align-items-center gap-2 px-3">
+      <span aria-hidden="true">+</span>
+      <span>Nuevo Paciente</span>
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3 p-md-4">
+      <div class="row g-3">
+        <div class="col-12 col-md-8">
+          <label for="search" class="form-label small fw-semibold">Buscar paciente</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              id="search"
+              class="form-control border-start-0"
+              placeholder="Buscar por DNI, nombre o apellido..."
+              [value]="searchTerm"
+              (input)="onSearchInput($event)"
+              aria-label="Buscar paciente por DNI, nombre o apellido"
+            />
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <label for="filtroEstado" class="form-label small fw-semibold">Estado</label>
+          <select
+            id="filtroEstado"
+            class="form-select"
+            [value]="estadoFiltro"
+            (change)="onEstadoChange($event)"
+            aria-label="Filtrar pacientes por estado"
+          >
+            <option value="todos">Todos los estados</option>
+            <option value="activo">Solo Activos</option>
+            <option value="inactivo">Solo Inactivos</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden" aria-live="polite">
+    @if (loading) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando pacientes...</span>
+        </div>
+      </div>
+    } @else if (pacientes.length === 0) {
+      <div class="text-center py-5">
+        <p class="text-muted mb-0">No se encontraron pacientes registrados con los filtros aplicados.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" aria-label="Tabla de pacientes registrados">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-4">DNI</th>
+              <th scope="col">Nombre y Apellido</th>
+              <th scope="col">Obra Social</th>
+              <th scope="col">Contacto / Teléfono</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="text-end pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of pacientes; track p.id_paciente) {
+              <tr>
+                <td class="ps-4 fw-semibold text-dark">{{ p.persona.dni }}</td>
+                <td>{{ p.persona.nombre }} {{ p.persona.apellido }}</td>
+                <td>
+                  <span class="badge bg-light text-dark border">{{ p.obra_social }}</span>
+                </td>
+                <td class="small text-muted">{{ p.persona.telefono || 'Sin teléfono' }}</td>
+                <td>
+                  @if (p.activo) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Activo</span>
+                  } @else {
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">Inactivo</span>
+                  }
+                </td>
+                <td class="text-end pe-4">
+                  <div class="btn-group btn-group-sm">
+                    <a
+                      [routerLink]="['/pacientes', p.id_paciente, 'editar']"
+                      class="btn btn-outline-primary"
+                      [attr.aria-label]="'Editar datos de ' + p.persona.nombre + ' ' + p.persona.apellido"
+                    >
+                      Editar
+                    </a>
+                    <button
+                      type="button"
+                      class="btn"
+                      [class.btn-outline-danger]="p.activo"
+                      [class.btn-outline-success]="!p.activo"
+                      (click)="onToggleEstado(p)"
+                      [attr.aria-label]="(p.activo ? 'Desactivar paciente ' : 'Activar paciente ') + p.persona.nombre + ' ' + p.persona.apellido"
+                    >
+                      {{ p.activo ? 'Desactivar' : 'Activar' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-footer bg-white border-top py-3 px-4 d-flex justify-content-between align-items-center">
+        <span class="small text-muted">Total de pacientes: <strong>{{ total }}</strong></span>
+      </div>
+    }
+  </div>
+</main>

@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
   <div class="container-fluid px-4">
     <a class="navbar-brand fw-bold d-flex align-items-center gap-2" [routerLink]="dashboardRoute" role="button">
-      <span>⚕</span>
+      <span aria-hidden="true">⚕</span>
       <span>Gestión de Turnos</span>
     </a>
 
@@ -19,7 +19,7 @@
   </div>
 </nav>
 
-<main class="container py-5">
+<main id="main-content" class="container py-5">
   <div class="row mb-4">
     <div class="col-12">
       <div class="p-4 bg-white rounded-4 shadow-sm border-0">
@@ -73,7 +73,7 @@
           <div class="card-body">
             <h5 class="card-title fw-bold text-primary">Gestión de Pacientes</h5>
             <p class="card-text text-muted small">Alta, modificación y consulta de pacientes y cobertura médica.</p>
-            <button class="btn btn-outline-secondary btn-sm" disabled>Pacientes</button>
+            <a routerLink="/pacientes" class="btn btn-outline-primary btn-sm">Pacientes</a>
           </div>
         </div>
       </div>

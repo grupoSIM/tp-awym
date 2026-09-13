@@ -22,8 +22,10 @@ export class DashboardComponent {
   }
 
   onLogout(): void {
-    this.authService.logout().subscribe(() => {
-      this.router.navigate(['/login']);
-    });
+    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+      this.authService.logout().subscribe(() => {
+        this.router.navigate(['/login']);
+      });
+    }
   }
 }
