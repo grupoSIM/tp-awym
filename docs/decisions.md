@@ -8,6 +8,7 @@ Las decisiones comienzan como `proposed` y solo pasan a `accepted` con aprobaci�
 | ADR-002 | Stack Tecnológico Angular + Node/Express (TS) + MySQL | accepted | Ninguno |
 | ADR-003 | Persistencia y Migraciones con Prisma ORM | accepted | Ninguno |
 | ADR-004 | Autenticación basada en DNI, bcrypt y sesiones seguras | accepted | Ninguno |
+| ADR-005 | Entorno de Staging contenerizado en Hostinger VPS con CI/CD (GHCR + SSH) | accepted | Ninguno |
 
 ## ADR-001 — Arquitectura Cliente-Servidor y estructura Monorepo
 
@@ -74,3 +75,23 @@ Las contraseñas se almacenarán utilizando hash seguro con `bcrypt`. La autenti
 
 ### Consecuencias
 Cumple con las directrices de seguridad RNF-01 y RNF-07 evitando la exposición de contraseñas y vectores comunes de ataque como XSS y CSRF.
+
+---
+
+## ADR-005 — Entorno de Staging contenerizado en Hostinger VPS con CI/CD (GHCR + SSH)
+
+- **Estado:** accepted
+- **Decisor:** Usuario / Líder técnico
+- **Referencia de aprobación:** Decisión explícita 2026-09-12 (/grill-me)
+
+### Contexto
+Se requiere disponer de un entorno de pruebas/staging accesible públicamente a través de un subdominio en un VPS de Hostinger con reverse proxy existente, automatizando las pruebas y el despliegue al enviar cambios a una rama dedicada.
+
+### Decisión
+1. Se implementa un stack contenerizado para staging (`docker-compose.staging.yml`) compuesto por frontend Angular servido con Nginx, backend Express/Prisma y base de datos MySQL 8 aislada con volumen persistente.
+2. Nginx en el frontend expone un único puerto hacia el host (ej. `3080`) y rutea las peticiones `/api/` internamente hacia el backend, evitando incidencias de CORS y simplificando el manejo seguro de cookies entre dominios.
+3. El pipeline de GitHub Actions compila imágenes multi-stage al hacer push en la rama `staging`, las publica en GitHub Container Registry (`ghcr.io`), y ejecuta el despliegue automático en el VPS mediante SSH y `docker compose pull && up -d`.
+4. Las migraciones de Prisma se ejecutan automáticamente en el arranque del contenedor de backend.
+
+### Consecuencias
+Permite validar el sistema en un entorno idéntico a producción de forma automatizada, desacopla la compilación de recursos del VPS hacia los runners de GitHub, y preserva la integridad de datos con persistencia dedicada.

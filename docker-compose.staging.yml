@@ -1,0 +1,55 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tp-awym-staging-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-stagingrootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-turnos_db}
+      MYSQL_USER: ${MYSQL_USER:-turnos_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-stagingpassword}
+    volumes:
+      - staging_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - staging_net
+
+  server:
+    image: ghcr.io/gruposim/tp-awym-server:staging
+    container_name: tp-awym-staging-server
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-turnos_user}:${MYSQL_PASSWORD:-stagingpassword}@mysql:3306/${MYSQL_DATABASE:-turnos_db}
+      JWT_SECRET: ${JWT_SECRET:-staging-jwt-secret-key-replace-me}
+      COOKIE_SECRET: ${COOKIE_SECRET:-staging-cookie-secret-key-replace-me}
+      PORT: 3000
+      CLIENT_URL: ${CLIENT_URL:-http://localhost}
+      NODE_ENV: production
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - staging_net
+
+  client:
+    image: ghcr.io/gruposim/tp-awym-client:staging
+    container_name: tp-awym-staging-client
+    restart: unless-stopped
+    ports:
+      - "${STAGING_WEB_PORT:-3080}:80"
+    depends_on:
+      - server
+    networks:
+      - staging_net
+
+networks:
+  staging_net:
+    driver: bridge
+
+volumes:
+  staging_mysql_data:
