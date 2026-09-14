@@ -113,35 +113,42 @@ jobs:
     name: Deploy to Hostinger VPS
     needs: build-and-push
     runs-on: ubuntu-latest
+    env:
+      WEBHOOK_URL: ${{ secrets.HOSTINGER_WEBHOOK_URL }}
+      SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+      SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+      SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+      SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT != '' && secrets.HOSTINGER_SSH_PORT || '22' }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Trigger Hostinger Webhook (if configured)
-        if: ${{ secrets.HOSTINGER_WEBHOOK_URL != '' }}
+        if: env.WEBHOOK_URL != ''
         run: |
           echo "Disparando webhook de re-despliegue en Hostinger Docker Manager..."
-          curl -X POST "${{ secrets.HOSTINGER_WEBHOOK_URL }}"
+          curl -X POST "$WEBHOOK_URL"
 
       - name: Copy docker-compose.staging.yml to VPS (SSH)
-        if: ${{ secrets.HOSTINGER_SSH_HOST != '' && secrets.HOSTINGER_SSH_KEY != '' }}
+        if: env.SSH_HOST != '' && env.SSH_KEY != ''
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOSTINGER_SSH_HOST }}
           username: ${{ secrets.HOSTINGER_SSH_USER }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT || 22 }}
+          port: ${{ env.SSH_PORT }}
           source: 'docker-compose.staging.yml'
           target: ${{ secrets.DEPLOY_PATH }}
 
       - name: Execute Deployment Commands on VPS (SSH)
-        if: ${{ secrets.HOSTINGER_SSH_HOST != '' && secrets.HOSTINGER_SSH_KEY != '' }}
+        if: env.SSH_HOST != '' && env.SSH_KEY != ''
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOSTINGER_SSH_HOST }}
           username: ${{ secrets.HOSTINGER_SSH_USER }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT || 22 }}
+          port: ${{ env.SSH_PORT }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
