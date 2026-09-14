@@ -55,7 +55,6 @@
                 class="form-select bg-light"
                 formControlName="id_profesional"
                 [attr.aria-invalid]="form.get('id_profesional')?.invalid && form.get('id_profesional')?.touched"
-                [attr.disabled]="isProfesional ? true : null"
               >
                 <option [ngValue]="null" disabled>Seleccione un profesional</option>
                 @for (p of profesionales; track p.id_profesional) {

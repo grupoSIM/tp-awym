@@ -88,10 +88,11 @@ export class AgendaFormComponent implements OnInit {
     this.profesionalesService.getProfesionales(undefined, undefined, 'activo', 1, 100).subscribe({
       next: (res) => {
         this.profesionales = res.data;
-        if (this.isProfesional && !this.isEditing) {
+        if (this.isProfesional) {
           const miProf = this.profesionales.find((p) => p.persona.dni === this.user?.dni);
           if (miProf) {
             this.form.patchValue({ id_profesional: miProf.id_profesional });
+            this.form.get('id_profesional')?.disable();
           }
         }
       },
@@ -119,6 +120,9 @@ export class AgendaFormComponent implements OnInit {
           hora_fin: agenda.hora_fin,
           duracion_minutos: agenda.duracion_minutos,
         });
+        if (this.isProfesional) {
+          this.form.get('id_profesional')?.disable();
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -134,7 +138,8 @@ export class AgendaFormComponent implements OnInit {
       return;
     }
 
-    const { hora_inicio, hora_fin, duracion_minutos } = this.form.value;
+    const formValues = this.form.getRawValue();
+    const { hora_inicio, hora_fin, duracion_minutos } = formValues;
     if (hora_inicio >= hora_fin) {
       this.errorMessage = 'La hora de inicio debe ser anterior a la hora de fin';
       return;
@@ -144,9 +149,9 @@ export class AgendaFormComponent implements OnInit {
     this.errorMessage = '';
 
     const payload = {
-      id_profesional: Number(this.form.value.id_profesional),
-      id_consultorio: Number(this.form.value.id_consultorio),
-      dia_semana: Number(this.form.value.dia_semana),
+      id_profesional: Number(formValues.id_profesional),
+      id_consultorio: Number(formValues.id_consultorio),
+      dia_semana: Number(formValues.dia_semana),
       hora_inicio,
       hora_fin,
       duracion_minutos: Number(duracion_minutos),

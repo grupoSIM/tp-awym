@@ -14,14 +14,16 @@ describe('AgendaFormComponent', () => {
   let profesionalesServiceSpy: jasmine.SpyObj<ProfesionalesService>;
   let consultoriosServiceSpy: jasmine.SpyObj<ConsultoriosService>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let currentUserMock: any;
   let router: Router;
 
   beforeEach(async () => {
+    currentUserMock = { id_usuario: 1, email: 'admin@test.com', rol: 'ADMIN', nombre: 'Admin', apellido: 'Test' };
     agendasServiceSpy = jasmine.createSpyObj('AgendasService', ['getAgendaById', 'createAgenda', 'updateAgenda']);
     profesionalesServiceSpy = jasmine.createSpyObj('ProfesionalesService', ['getProfesionales']);
     consultoriosServiceSpy = jasmine.createSpyObj('ConsultoriosService', ['getConsultorios']);
     authServiceSpy = jasmine.createSpyObj('AuthService', ['logout'], {
-      currentUser: () => ({ id_usuario: 1, email: 'admin@test.com', rol: 'ADMIN', nombre: 'Admin', apellido: 'Test' }),
+      currentUser: () => currentUserMock,
     });
 
     profesionalesServiceSpy.getProfesionales.and.returnValue(
@@ -112,5 +114,35 @@ describe('AgendaFormComponent', () => {
       duracion_minutos: 30,
     });
     expect(router.navigate).toHaveBeenCalledWith(['/agendas']);
+  });
+
+  it('debe deshabilitar el selector de profesional si el usuario autenticado tiene rol PROFESIONAL al editar agenda', () => {
+    currentUserMock = {
+      id_usuario: 2,
+      email: 'prof@test.com',
+      rol: 'PROFESIONAL',
+      nombre: 'Carlos',
+      apellido: 'Gomez',
+      dni: '12345678',
+    };
+
+    agendasServiceSpy.getAgendaById.and.returnValue(
+      of({
+        id_agenda: 1,
+        id_profesional: 1,
+        id_consultorio: 1,
+        dia_semana: 1,
+        hora_inicio: '08:00',
+        hora_fin: '12:00',
+        duracion_minutos: 30,
+        activo: true,
+      })
+    );
+
+    component.isEditing = true;
+    component.agendaId = 1;
+    component.cargarAgenda(1);
+
+    expect(component.form.get('id_profesional')?.disabled).toBeTrue();
   });
 });
