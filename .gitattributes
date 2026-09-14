@@ -1,5 +1,6 @@
 * text=auto
 *.md text eol=lf
+specs/** -text
 *.yaml text eol=lf
 *.yml text eol=lf
 *.ps1 text eol=lf
