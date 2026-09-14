@@ -40,7 +40,7 @@ export class ConsultoriosComponent implements OnInit {
   }
 
   get canManage(): boolean {
-    return this.user?.rol === 'ADMIN' || this.user?.rol === 'RECEPCIONISTA';
+    return this.user?.rol === 'ADMIN';
   }
 
   ngOnInit(): void {

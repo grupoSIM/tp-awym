@@ -10,6 +10,7 @@ describe('ConsultoriosComponent', () => {
   let fixture: ComponentFixture<ConsultoriosComponent>;
   let consultoriosServiceSpy: jasmine.SpyObj<ConsultoriosService>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let currentUserMock: any;
 
   const mockConsultorios = [
     {
@@ -29,6 +30,7 @@ describe('ConsultoriosComponent', () => {
   ];
 
   beforeEach(async () => {
+    currentUserMock = { id_usuario: 1, email: 'admin@test.com', rol: 'ADMIN', nombre: 'Admin', apellido: 'Test' };
     consultoriosServiceSpy = jasmine.createSpyObj('ConsultoriosService', [
       'getConsultorios',
       'createConsultorio',
@@ -37,7 +39,7 @@ describe('ConsultoriosComponent', () => {
     ]);
     consultoriosServiceSpy.getConsultorios.and.returnValue(of(mockConsultorios));
     authServiceSpy = jasmine.createSpyObj('AuthService', ['logout'], {
-      currentUser: () => ({ id_usuario: 1, email: 'admin@test.com', rol: 'ADMIN', nombre: 'Admin', apellido: 'Test' }),
+      currentUser: () => currentUserMock,
     });
 
     await TestBed.configureTestingModule({
@@ -86,5 +88,10 @@ describe('ConsultoriosComponent', () => {
       piso: '1',
     });
     expect(component.showModal).toBe(false);
+  });
+
+  it('no debe permitir administrar consultorios si el rol es RECEPCIONISTA', () => {
+    currentUserMock = { id_usuario: 2, email: 'recep@test.com', rol: 'RECEPCIONISTA', nombre: 'Recep', apellido: 'Test' };
+    expect(component.canManage).toBeFalse();
   });
 });

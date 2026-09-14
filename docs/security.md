@@ -22,7 +22,7 @@
 - **Control de acceso basado en roles (RBAC):** Validación en cada endpoint del backend verificando los permisos específicos del rol autenticado:
   - `PACIENTE`: Acceso exclusivo a su perfil y turnos propios; sin acceso a administración de agendas, consultorios ni profesionales.
   - `PROFESIONAL`: Consulta de su propia agenda y asignaciones de turnos.
-  - `RECEPCIONISTA`: Consulta y reserva de turnos, consulta de profesionales/consultorios/agendas.
+  - `RECEPCIONISTA`: Consulta y reserva de turnos, consulta de profesionales/consultorios/agendas (sin permisos de alta, edición o baja lógica sobre consultorios).
   - `ADMIN`: Gestión total (CRUD) de usuarios, roles, pacientes, profesionales, especialidades, consultorios y configuración de agendas.
 - **Validación y sanitización:** Validación de entrada estricta en backend para todos los payloads JSON.
 - **Prevención de condiciones de carrera:** Transacciones con nivel de aislamiento adecuado para reservar y confirmar turnos, y bloqueos lógicos en la verificación de solapamientos de agendas.

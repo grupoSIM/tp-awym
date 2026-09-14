@@ -158,7 +158,7 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
   });
 
   describe('Consultorios CRUD y Filtros (TEST-033, TEST-034)', () => {
-    it('debe permitir crear consultorios con rol ADMIN o RECEPCIONISTA (TEST-034)', async () => {
+    it('debe permitir crear consultorios con rol ADMIN y denegar a RECEPCIONISTA con 403 (TEST-034)', async () => {
       const res1 = await request(app)
         .post('/api/v1/consultorios')
         .set('Cookie', adminCookie)
@@ -173,9 +173,19 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
       expect(res1.body.activo).toBe(true);
       testConsultorioId1 = res1.body.id_consultorio;
 
-      const res2 = await request(app)
+      const resRecep = await request(app)
         .post('/api/v1/consultorios')
         .set('Cookie', recepcionistaCookie)
+        .send({
+          numero: 'TEST-C102',
+          ubicacion: 'Ala Sur',
+          piso: 'Piso 1',
+        });
+      expect(resRecep.status).toBe(403);
+
+      const res2 = await request(app)
+        .post('/api/v1/consultorios')
+        .set('Cookie', adminCookie)
         .send({
           numero: 'TEST-C102',
           ubicacion: 'Ala Sur',

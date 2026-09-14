@@ -21,18 +21,18 @@ consultoriosRouter.get(
 
 consultoriosRouter.post(
   '/',
-  requireRole(Rol.ADMIN, Rol.RECEPCIONISTA),
+  requireRole(Rol.ADMIN),
   consultoriosController.createConsultorio.bind(consultoriosController)
 );
 
 consultoriosRouter.put(
   '/:id',
-  requireRole(Rol.ADMIN, Rol.RECEPCIONISTA),
+  requireRole(Rol.ADMIN),
   consultoriosController.updateConsultorio.bind(consultoriosController)
 );
 
 consultoriosRouter.patch(
   '/:id/estado',
-  requireRole(Rol.ADMIN, Rol.RECEPCIONISTA),
+  requireRole(Rol.ADMIN),
   consultoriosController.toggleEstado.bind(consultoriosController)
 );
