@@ -9,7 +9,7 @@ profesionalesRouter.use(authenticate);
 
 profesionalesRouter.get(
   '/',
-  requireRole(Rol.ADMIN, Rol.RECEPCIONISTA),
+  requireRole(Rol.ADMIN, Rol.RECEPCIONISTA, Rol.PROFESIONAL, Rol.PACIENTE),
   profesionalesController.getProfesionales.bind(profesionalesController)
 );
 

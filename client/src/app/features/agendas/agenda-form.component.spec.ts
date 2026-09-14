@@ -136,13 +136,30 @@ describe('AgendaFormComponent', () => {
         hora_fin: '12:00',
         duracion_minutos: 30,
         activo: true,
-      })
+        profesional: {
+          id_profesional: 1,
+          id_persona: 2,
+          matricula: 'MN-1234',
+          activo: true,
+          persona: {
+            id_persona: 2,
+            dni: '12345678',
+            nombre: 'Carlos',
+            apellido: 'Gomez',
+            email: 'prof@test.com',
+            fecha_nacimiento: '1980-01-01',
+          },
+          especialidades: [],
+        },
+      } as any)
     );
 
     component.isEditing = true;
     component.agendaId = 1;
     component.cargarAgenda(1);
 
+    expect(component.profesionales.some((p) => p.id_profesional === 1)).toBeTrue();
+    expect(component.form.get('id_profesional')?.value).toBe(1);
     expect(component.form.get('id_profesional')?.disabled).toBeTrue();
   });
 });

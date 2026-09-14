@@ -87,9 +87,18 @@ export class AgendaFormComponent implements OnInit {
   cargarCombos(): void {
     this.profesionalesService.getProfesionales(undefined, undefined, 'activo', 1, 100).subscribe({
       next: (res) => {
-        this.profesionales = res.data;
+        for (const p of res.data) {
+          if (!this.profesionales.some((existing) => existing.id_profesional === p.id_profesional)) {
+            this.profesionales.push(p);
+          }
+        }
+        if (this.profesionales.length === 0) {
+          this.profesionales = res.data;
+        }
         if (this.isProfesional) {
-          const miProf = this.profesionales.find((p) => p.persona.dni === this.user?.dni);
+          const miProf = this.profesionales.find(
+            (p) => (this.user?.personaId && p.id_persona === this.user.personaId) || p.persona?.dni === this.user?.dni
+          );
           if (miProf) {
             this.form.patchValue({ id_profesional: miProf.id_profesional });
             this.form.get('id_profesional')?.disable();
@@ -100,7 +109,14 @@ export class AgendaFormComponent implements OnInit {
 
     this.consultoriosService.getConsultorios(undefined, 'activo').subscribe({
       next: (data) => {
-        this.consultorios = data;
+        for (const c of data) {
+          if (!this.consultorios.some((existing) => existing.id_consultorio === c.id_consultorio)) {
+            this.consultorios.push(c);
+          }
+        }
+        if (this.consultorios.length === 0) {
+          this.consultorios = data;
+        }
         if (!this.isEditing && this.consultorios.length > 0 && !this.form.value.id_consultorio) {
           this.form.patchValue({ id_consultorio: this.consultorios[0].id_consultorio });
         }
@@ -111,7 +127,13 @@ export class AgendaFormComponent implements OnInit {
   cargarAgenda(id: number): void {
     this.loading = true;
     this.agendasService.getAgendaById(id).subscribe({
-      next: (agenda) => {
+      next: (agenda: any) => {
+        if (agenda.profesional && !this.profesionales.some((p) => p.id_profesional === agenda.id_profesional)) {
+          this.profesionales = [agenda.profesional, ...this.profesionales];
+        }
+        if (agenda.consultorio && !this.consultorios.some((c) => c.id_consultorio === agenda.id_consultorio)) {
+          this.consultorios = [agenda.consultorio, ...this.consultorios];
+        }
         this.form.patchValue({
           id_profesional: agenda.id_profesional,
           id_consultorio: agenda.id_consultorio,
