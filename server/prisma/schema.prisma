@@ -31,6 +31,7 @@ model Persona {
   actualizado_en   DateTime  @updatedAt
   usuario          Usuario?
   paciente         Paciente?
+  profesional      Profesional?
 
   @@map("personas")
 }
@@ -60,4 +61,42 @@ model Usuario {
   persona Persona @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
 
   @@map("usuarios")
+}
+
+model Profesional {
+  id_profesional Int      @id @default(autoincrement())
+  id_persona     Int      @unique
+  matricula      String   @unique @db.VarChar(50)
+  activo         Boolean  @default(true)
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  persona        Persona                   @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
+  especialidades ProfesionalEspecialidad[]
+
+  @@map("profesionales")
+}
+
+model Especialidad {
+  id_especialidad Int      @id @default(autoincrement())
+  nombre          String   @unique @db.VarChar(100)
+  descripcion     String?  @db.VarChar(255)
+  activo          Boolean  @default(true)
+  creado_en       DateTime @default(now())
+  actualizado_en  DateTime @updatedAt
+
+  profesionales ProfesionalEspecialidad[]
+
+  @@map("especialidades")
+}
+
+model ProfesionalEspecialidad {
+  id_profesional  Int
+  id_especialidad Int
+
+  profesional  Profesional  @relation(fields: [id_profesional], references: [id_profesional], onDelete: Cascade)
+  especialidad Especialidad @relation(fields: [id_especialidad], references: [id_especialidad], onDelete: Restrict)
+
+  @@id([id_profesional, id_especialidad])
+  @@map("profesionales_especialidades")
 }

@@ -45,11 +45,32 @@ async function main() {
     },
   ];
 
+  // Crear catálogo base de especialidades si no existen
+  const especialidadesBase = [
+    { nombre: 'Clínica Médica', descripcion: 'Atención médica integral para adultos' },
+    { nombre: 'Cardiología', descripcion: 'Diagnóstico y tratamiento de enfermedades cardiovasculares' },
+    { nombre: 'Pediatría', descripcion: 'Atención médica integral pediátrica' },
+    { nombre: 'Traumatología', descripcion: 'Tratamiento de lesiones óseas y articulares' },
+  ];
+
+  for (const esp of especialidadesBase) {
+    const existing = await prisma.especialidad.findUnique({ where: { nombre: esp.nombre } });
+    if (!existing) {
+      await prisma.especialidad.create({ data: esp });
+    }
+  }
+
   for (const u of usuarios) {
     await prisma.usuario.deleteMany({
       where: { persona: { dni: u.dni } },
     });
     await prisma.paciente.deleteMany({
+      where: { persona: { dni: u.dni } },
+    });
+    await prisma.profesionalEspecialidad.deleteMany({
+      where: { profesional: { persona: { dni: u.dni } } },
+    });
+    await prisma.profesional.deleteMany({
       where: { persona: { dni: u.dni } },
     });
     await prisma.persona.deleteMany({
@@ -81,11 +102,27 @@ async function main() {
               },
             }
           : {}),
+        ...(u.rol === Rol.PROFESIONAL
+          ? {
+              profesional: {
+                create: {
+                  matricula: 'MP-33441',
+                  activo: true,
+                  especialidades: {
+                    create: [
+                      { especialidad: { connect: { nombre: 'Clínica Médica' } } },
+                      { especialidad: { connect: { nombre: 'Cardiología' } } },
+                    ],
+                  },
+                },
+              },
+            }
+          : {}),
       },
     });
   }
 
-  console.log('Seed completado con éxito: 4 usuarios creados (password: Password123!)');
+  console.log('Seed completado con éxito: 4 usuarios y catálogo de especialidades creados');
 }
 
 main()

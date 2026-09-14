@@ -1,7 +1,7 @@
 project: "tp-awym-gemini"
-active_feature: feat-002
+active_feature: feat-003
 phase: done
-updated_at: "2026-09-12"
+updated_at: "2026-09-14"
 
 blockers: []
 risks: []
@@ -9,47 +9,43 @@ decisions: []
 
 approvals:
   architecture:
-    applicability: required
-    rationale: "Modelo de datos de salud (cobertura médica) bajo la arquitectura y seguridad aprobadas en ADR-001 a ADR-004."
-    status: approved
-    approved_by: "José Chamorro"
-    approved_at: "2026-09-12T20:43:46-03:00"
-    reference: "docs/decisions.md"
+    applicability: not_required
+    rationale: "La gestión de profesionales y especialidades se ajusta a la arquitectura y stack aprobados en ADR-001 a ADR-004."
   specification:
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-12T20:43:46-03:00"
-    reference: "specs/features/feat-002/spec-review.md"
+    approved_at: "2026-09-14T11:51:45-03:00"
+    reference: "specs/features/feat-003/spec-review.md"
     bundle:
       algorithm: sha256
-      digest: 05ed41c4110e93cd65e0204880560c7a0a1c77e16842c59c9210b79dcd0dd23f
+      digest: 32d9fe9767d3068ba3475576333d75f133c91c851490515e2ac9adc526a8fbbc
       files:
-        - path: specs/features/feat-002/acceptance.md
-          bytes: 2674
-          sha256: 96536e72b28faf04e42c0fc56035fa5f3a7cfbaec4ce5ad484defb5dd5104bdf
-        - path: specs/features/feat-002/design.md
-          bytes: 2922
-          sha256: 658bd204114147d4ea5f65c9ae3f2ae7b72fa24d61851dfc8ae0e9e3c5ca0dd9
-        - path: specs/features/feat-002/requirements.md
-          bytes: 3605
-          sha256: efb8346c9dd1525c0ce31b5b94ca0b2af0027d3404a5cd5dc544b2bf2b2884dd
-        - path: specs/features/feat-002/tasks.md
-          bytes: 1290
-          sha256: 706cd0577d51fdff44f2586bed295900070f22189805f0247f6f52c5c8bef2dc
-        - path: specs/features/feat-002/test-plan.md
-          bytes: 2596
-          sha256: 3982b7a496e15e8a85ad494d1e87bfde9f939ccaa5c80b48ffc57d684d23142b
+        - path: specs/features/feat-003/acceptance.md
+          bytes: 3160
+          sha256: abd4a0ee794b01eb95f07a0b6072c23261df346eb9e0d444c0836033f40f16f9
+        - path: specs/features/feat-003/design.md
+          bytes: 5268
+          sha256: f2171f671b4f05c1057b97316154fc7fc34d6d382270b6e44419ab93cec29351
+        - path: specs/features/feat-003/requirements.md
+          bytes: 4969
+          sha256: b57b9bc8ebf54213778c0d193910f45a094c4095f692a2c76a8d2eaad271262d
+        - path: specs/features/feat-003/tasks.md
+          bytes: 1688
+          sha256: 0368e3b038bfba22a3e6f4b5e3bc3669599039b0318afb1650e5c6b882525b61
+        - path: specs/features/feat-003/test-plan.md
+          bytes: 3369
+          sha256: f0e2bfda70b5f5a8413c5659576dadfd9582ce180253037a6c348055f690590d
     review:
       status: pass
       reviewed_by: "tech-reviewer"
-      reviewed_at: "2026-09-12T20:41:00-03:00"
-      reference: "specs/features/feat-002/spec-review.md"
-      specification_digest: 05ed41c4110e93cd65e0204880560c7a0a1c77e16842c59c9210b79dcd0dd23f
+      reviewed_at: "2026-09-14T11:24:50-03:00"
+      reference: "specs/features/feat-003/spec-review.md"
+      specification_digest: 32d9fe9767d3068ba3475576333d75f133c91c851490515e2ac9adc526a8fbbc
   publication:
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-12T22:05:00-03:00"
-    reference: "specs/features/feat-002/evidence.md"
+    approved_at: "2026-09-14T14:23:18-03:00"
+    reference: "specs/features/feat-003/evidence.md"
 
 execution:
   implemented_by: "antigravity-developer"
@@ -57,9 +53,9 @@ execution:
 quality:
   status: pass
   reviewed_by: "qa-verifier"
-  reviewed_at: "2026-09-12T20:52:00-03:00"
-  reference: "specs/features/feat-002/evidence.md"
-  specification_digest: 05ed41c4110e93cd65e0204880560c7a0a1c77e16842c59c9210b79dcd0dd23f
+  reviewed_at: "2026-09-14T12:04:30-03:00"
+  reference: "specs/features/feat-003/evidence.md"
+  specification_digest: 32d9fe9767d3068ba3475576333d75f133c91c851490515e2ac9adc526a8fbbc
 
 notes:
-  - Aprobaciones de arquitectura y especificacion registradas para feat-002.
+  - Activación y especificación aprobadas para feat-003.

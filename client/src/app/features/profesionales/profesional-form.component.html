@@ -1,0 +1,264 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
+      <span>⚕</span>
+      <span>Gestión de Turnos</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+      @if (user) {
+        <div class="text-white text-end d-none d-sm-block">
+          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
+          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
+        </div>
+      }
+      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content" class="container py-4" tabindex="-1">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <nav aria-label="Ruta de navegación" class="mb-3">
+        <ol class="breadcrumb mb-0 small">
+          <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
+          <li class="breadcrumb-item"><a routerLink="/profesionales" class="text-decoration-none">Profesionales</a></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ isEditMode ? 'Editar' : 'Nuevo' }}
+          </li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h1 class="h4 mb-0 fw-bold text-dark">
+            {{ isEditMode ? 'Modificar Datos de Profesional' : 'Alta de Profesional' }}
+          </h1>
+          <p class="text-muted small mb-0 mt-1">
+            {{ isEditMode ? 'Actualice la información médica y especialidades del profesional' : 'Complete el formulario para registrar un nuevo profesional' }}
+          </p>
+        </div>
+
+        <div class="card-body p-4">
+          <div *ngIf="errorMessage" class="alert alert-danger mb-4" role="alert" aria-live="assertive">
+            {{ errorMessage }}
+          </div>
+
+          <div *ngIf="loadingData" class="text-center py-5" aria-live="polite">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando datos...</span>
+            </div>
+          </div>
+
+          <form *ngIf="!loadingData" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+            <!-- DNI -->
+            <div class="mb-3">
+              <label for="dni" class="form-label small fw-semibold">
+                DNI <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                id="dni"
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('dni')"
+                formControlName="dni"
+                placeholder="Ej. 12345678"
+                maxlength="10"
+                aria-describedby="dni-error"
+                [attr.aria-invalid]="isFieldInvalid('dni')"
+              />
+              <div id="dni-error" class="invalid-feedback" *ngIf="isFieldInvalid('dni')">
+                <span *ngIf="form.get('dni')?.errors?.['required']">El DNI es obligatorio.</span>
+                <span *ngIf="form.get('dni')?.errors?.['pattern']">El DNI debe contener entre 7 y 10 dígitos numéricos.</span>
+              </div>
+              <div *ngIf="isEditMode" class="form-text text-muted">
+                El DNI identifica civilmente a la persona y no puede modificarse.
+              </div>
+            </div>
+
+            <!-- Nombre y Apellido -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="nombre" class="form-label small fw-semibold">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="nombre"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('nombre')"
+                  formControlName="nombre"
+                  placeholder="Ej. Juan"
+                  maxlength="50"
+                  aria-describedby="nombre-error"
+                  [attr.aria-invalid]="isFieldInvalid('nombre')"
+                />
+                <div id="nombre-error" class="invalid-feedback" *ngIf="isFieldInvalid('nombre')">
+                  El nombre es obligatorio (entre 2 y 50 letras).
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="apellido" class="form-label small fw-semibold">
+                  Apellido <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="apellido"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('apellido')"
+                  formControlName="apellido"
+                  placeholder="Ej. Pérez"
+                  maxlength="50"
+                  aria-describedby="apellido-error"
+                  [attr.aria-invalid]="isFieldInvalid('apellido')"
+                />
+                <div id="apellido-error" class="invalid-feedback" *ngIf="isFieldInvalid('apellido')">
+                  El apellido es obligatorio (entre 2 y 50 letras).
+                </div>
+              </div>
+            </div>
+
+            <!-- Matrícula -->
+            <div class="mb-3">
+              <label for="matricula" class="form-label small fw-semibold">
+                Matrícula Profesional <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                id="matricula"
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('matricula')"
+                formControlName="matricula"
+                placeholder="Ej. MP-12345"
+                maxlength="50"
+                aria-describedby="matricula-error"
+                [attr.aria-invalid]="isFieldInvalid('matricula')"
+              />
+              <div id="matricula-error" class="invalid-feedback" *ngIf="isFieldInvalid('matricula')">
+                La matrícula es obligatoria (entre 3 y 50 caracteres).
+              </div>
+            </div>
+
+            <!-- Especialidades (Selección Múltiple) -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold d-block">
+                Especialidades Médicas <span class="text-danger">*</span>
+              </label>
+              <div
+                class="border rounded-3 p-3 bg-light"
+                [class.border-danger]="especialidadesArray.invalid && (especialidadesArray.dirty || especialidadesArray.touched)"
+                role="group"
+                aria-label="Selección de especialidades médicas"
+              >
+                <div *ngIf="especialidadesDisponibles.length === 0" class="text-muted small">
+                  No hay especialidades registradas. Debe crear especialidades primero.
+                </div>
+                <div class="row g-2" *ngIf="especialidadesDisponibles.length > 0">
+                  <div
+                    class="col-md-6"
+                    *ngFor="let esp of especialidadesDisponibles; let i = index"
+                  >
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        [id]="'esp-check-' + esp.id_especialidad"
+                        [formControl]="$any(especialidadesArray.at(i))"
+                      />
+                      <label class="form-check-label small" [for]="'esp-check-' + esp.id_especialidad">
+                        {{ esp.nombre }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="text-danger small mt-1"
+                *ngIf="especialidadesArray.invalid && (especialidadesArray.dirty || especialidadesArray.touched)"
+              >
+                Debe seleccionar al menos una especialidad.
+              </div>
+            </div>
+
+            <!-- Fecha de Nacimiento -->
+            <div class="mb-3">
+              <label for="fecha_nacimiento" class="form-label small fw-semibold">
+                Fecha de Nacimiento <span class="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                id="fecha_nacimiento"
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('fecha_nacimiento')"
+                formControlName="fecha_nacimiento"
+                [max]="maxDate"
+                [min]="minDate"
+                aria-describedby="fecha-error"
+                [attr.aria-invalid]="isFieldInvalid('fecha_nacimiento')"
+              />
+              <div id="fecha-error" class="invalid-feedback" *ngIf="isFieldInvalid('fecha_nacimiento')">
+                <span *ngIf="form.get('fecha_nacimiento')?.errors?.['required']">La fecha de nacimiento es obligatoria.</span>
+                <span *ngIf="form.get('fecha_nacimiento')?.errors?.['futureDate']">La fecha no puede ser futura.</span>
+                <span *ngIf="form.get('fecha_nacimiento')?.errors?.['tooOld']">La fecha de nacimiento no es válida.</span>
+              </div>
+            </div>
+
+            <!-- Email y Teléfono -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="email" class="form-label small fw-semibold">
+                  Correo Electrónico <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('email')"
+                  formControlName="email"
+                  placeholder="ejemplo@correo.com"
+                  maxlength="150"
+                  aria-describedby="email-error"
+                  [attr.aria-invalid]="isFieldInvalid('email')"
+                />
+                <div id="email-error" class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+                  Ingrese un correo electrónico válido.
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="telefono" class="form-label small fw-semibold">Teléfono</label>
+                <input
+                  type="tel"
+                  id="telefono"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('telefono')"
+                  formControlName="telefono"
+                  placeholder="Ej. +54 9 11 1234-5678"
+                  maxlength="20"
+                  aria-describedby="telefono-error"
+                  [attr.aria-invalid]="isFieldInvalid('telefono')"
+                />
+                <div id="telefono-error" class="invalid-feedback" *ngIf="isFieldInvalid('telefono')">
+                  Formato de teléfono inválido (mínimo 7 dígitos).
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+              <a routerLink="/profesionales" class="btn btn-outline-secondary">Cancelar</a>
+              <button type="submit" class="btn btn-primary" [disabled]="submitting">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                {{ isEditMode ? 'Guardar Cambios' : 'Registrar Profesional' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

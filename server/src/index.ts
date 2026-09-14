@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { authRouter } from './routes/auth.routes';
 import { pacientesRouter } from './routes/pacientes.routes';
+import { especialidadesRouter } from './routes/especialidades.routes';
+import { profesionalesRouter } from './routes/profesionales.routes';
 
 dotenv.config();
 
@@ -20,6 +22,8 @@ app.use(cookieParser());
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/pacientes', pacientesRouter);
+app.use('/api/v1/especialidades', especialidadesRouter);
+app.use('/api/v1/profesionales', profesionalesRouter);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

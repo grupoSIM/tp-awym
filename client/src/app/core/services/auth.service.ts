@@ -64,7 +64,7 @@ export class AuthService {
     return !!user && allowedRoles.includes(user.rol);
   }
 
-  private clearSession(): void {
+  clearSession(): void {
     this.currentUserSignal.set(null);
     localStorage.removeItem('turnos_user');
   }

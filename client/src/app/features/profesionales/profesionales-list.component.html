@@ -1,0 +1,193 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
+      <span>⚕</span>
+      <span>Gestión de Turnos</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+      @if (user) {
+        <div class="text-white text-end d-none d-sm-block">
+          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
+          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
+        </div>
+      }
+      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content" class="container py-4">
+  <nav aria-label="Ruta de navegación" class="mb-3">
+    <ol class="breadcrumb mb-0 small">
+      <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Profesionales</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold text-dark mb-1">Gestión de Profesionales</h1>
+      <p class="text-muted small mb-0">Administre el catálogo de médicos, matrículas y especialidades asignadas</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a routerLink="/especialidades" class="btn btn-outline-primary d-inline-flex align-items-center gap-2 px-3">
+        <span>Especialidades</span>
+      </a>
+      <a *ngIf="isAdmin" routerLink="/profesionales/nuevo" class="btn btn-primary d-inline-flex align-items-center gap-2 px-3">
+        <span aria-hidden="true">+</span>
+        <span>Nuevo Profesional</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtros y Búsqueda -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3 p-md-4">
+      <div class="row g-3">
+        <div class="col-12 col-md-5">
+          <label for="search-prof" class="form-label small fw-semibold">Buscar profesional</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              id="search-prof"
+              class="form-control border-start-0"
+              placeholder="Buscar por DNI, nombre, apellido o matrícula..."
+              [value]="searchTerm"
+              (input)="onSearchInput($event)"
+              aria-label="Buscar profesional por DNI, nombre, apellido o matrícula"
+            />
+          </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label for="filtro-esp" class="form-label small fw-semibold">Especialidad</label>
+          <select
+            id="filtro-esp"
+            class="form-select"
+            [value]="especialidadFiltro"
+            (change)="onEspecialidadChange($event)"
+            aria-label="Filtrar por especialidad médica"
+          >
+            <option value="">Todas las especialidades</option>
+            <option *ngFor="let esp of especialidades" [value]="esp.id_especialidad">
+              {{ esp.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-3">
+          <label for="estado-filtro-prof" class="form-label small fw-semibold">Estado</label>
+          <select
+            id="estado-filtro-prof"
+            class="form-select"
+            [value]="estadoFiltro"
+            (change)="onEstadoChange($event)"
+            aria-label="Filtrar por estado"
+          >
+            <option value="todos">Todos los estados</option>
+            <option value="activo">Solo Activos</option>
+            <option value="inactivo">Solo Inactivos</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor de Tabla -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden" aria-live="polite">
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando profesionales...</span>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && profesionales.length === 0" class="text-center py-5">
+      <p class="text-muted mb-0">No se encontraron profesionales registrados con los filtros aplicados.</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && profesionales.length > 0">
+      <table class="table table-hover align-middle mb-0" aria-label="Tabla de profesionales registrados">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-4">DNI</th>
+            <th scope="col">Nombre y Apellido</th>
+            <th scope="col">Matrícula</th>
+            <th scope="col">Especialidades</th>
+            <th scope="col">Contacto / Email</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="text-end pe-4" *ngIf="isAdmin">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prof of profesionales">
+            <td class="ps-4 fw-semibold text-dark">{{ prof.persona.dni }}</td>
+            <td>{{ prof.persona.nombre }} {{ prof.persona.apellido }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ prof.matricula }}</span>
+            </td>
+            <td>
+              <div class="d-flex flex-wrap gap-1">
+                <span
+                  *ngFor="let pe of prof.especialidades"
+                  class="badge bg-info-subtle text-info-emphasis border border-info-subtle"
+                >
+                  {{ pe.especialidad.nombre }}
+                </span>
+                <span *ngIf="!prof.especialidades || prof.especialidades.length === 0" class="text-muted small">
+                  Sin especialidades
+                </span>
+              </div>
+            </td>
+            <td class="small text-muted">
+              <div>{{ prof.persona.email }}</div>
+              <div *ngIf="prof.persona.telefono">{{ prof.persona.telefono }}</div>
+            </td>
+            <td>
+              <span
+                *ngIf="prof.activo"
+                class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
+              >
+                Activo
+              </span>
+              <span
+                *ngIf="!prof.activo"
+                class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"
+              >
+                Inactivo
+              </span>
+            </td>
+            <td class="text-end pe-4" *ngIf="isAdmin">
+              <div class="btn-group btn-group-sm">
+                <a
+                  [routerLink]="['/profesionales', prof.id_profesional, 'editar']"
+                  class="btn btn-outline-primary"
+                  [attr.aria-label]="'Editar datos de ' + prof.persona.nombre + ' ' + prof.persona.apellido"
+                >
+                  Editar
+                </a>
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-outline-danger]="prof.activo"
+                  [class.btn-outline-success]="!prof.activo"
+                  (click)="onToggleEstado(prof)"
+                  [attr.aria-label]="(prof.activo ? 'Desactivar a ' : 'Activar a ') + prof.persona.nombre + ' ' + prof.persona.apellido"
+                >
+                  {{ prof.activo ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && profesionales.length > 0" class="card-footer bg-white border-top py-3 px-4 d-flex justify-content-between align-items-center">
+      <span class="small text-muted">Total de profesionales: <strong>{{ total }}</strong></span>
+    </div>
+  </div>
+</main>

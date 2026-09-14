@@ -18,7 +18,7 @@ features:
 
   - id: feat-003
     name: Gestión de profesionales y especialidades médicas
-    status: proposed
+    status: done
     priority: must
     depends_on:
       - feat-001
