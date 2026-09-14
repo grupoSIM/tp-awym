@@ -49,6 +49,9 @@ async function main() {
     await prisma.usuario.deleteMany({
       where: { persona: { dni: u.dni } },
     });
+    await prisma.paciente.deleteMany({
+      where: { persona: { dni: u.dni } },
+    });
     await prisma.persona.deleteMany({
       where: { dni: u.dni },
     });

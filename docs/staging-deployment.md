@@ -104,3 +104,22 @@ docker compose -f docker-compose.staging.yml pull
 docker compose -f docker-compose.staging.yml up -d
 ```
 El contenedor de backend ejecutará automáticamente cualquier nueva migración de base de datos (`npx prisma migrate deploy`) al iniciar.
+
+---
+
+## 4. Cargar Datos de Prueba (Seed)
+
+Para poblar la base de datos con los 4 usuarios iniciales (`Administrador`, `Paciente`, `Profesional`, `Recepcionista` con contraseña `Password123!`):
+
+### Método A: Desde la Terminal Web de Hostinger
+Ejecutá el siguiente comando dentro del directorio del proyecto:
+```bash
+docker compose -f docker-compose.staging.yml exec server node dist/seed.js
+```
+
+### Método B: Automático mediante variable de entorno
+En las variables de entorno de tu proyecto en Hostinger Docker Manager (o en el archivo `.env`), agregá:
+```env
+RUN_SEED=true
+```
+Y reiniciá el contenedor de `server`. Una vez poblada la base de datos, podés remover la variable o dejarla en `false` para no re-ejecutarlo en cada reinicio.

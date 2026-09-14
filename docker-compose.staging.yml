@@ -30,6 +30,7 @@ services:
       PORT: 3000
       CLIENT_URL: ${CLIENT_URL:-http://localhost}
       NODE_ENV: production
+      RUN_SEED: ${RUN_SEED:-false}
     depends_on:
       mysql:
         condition: service_healthy
