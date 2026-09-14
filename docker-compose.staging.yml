@@ -21,6 +21,7 @@ services:
 
   server:
     image: ghcr.io/gruposim/tp-awym-server:staging
+    pull_policy: always
     container_name: tp-awym-staging-server
     restart: unless-stopped
     environment:
@@ -39,6 +40,7 @@ services:
 
   client:
     image: ghcr.io/gruposim/tp-awym-client:staging
+    pull_policy: always
     container_name: tp-awym-staging-client
     restart: unless-stopped
     ports:
