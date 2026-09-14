@@ -31,7 +31,7 @@ export class ProfesionalesController {
       const profesional = await profesionalesService.getProfesionalById(id);
 
       // Si es profesional y no es admin/recepcionista, solo puede ver su propio perfil
-      if (req.user && req.user.rol === Rol.PROFESIONAL && req.user.id_persona !== profesional.id_persona) {
+      if (req.user && req.user.rol === Rol.PROFESIONAL && req.user.personaId !== profesional.id_persona) {
         res.status(403).json({ error: 'Acceso denegado a datos de otro profesional' });
         return;
       }
