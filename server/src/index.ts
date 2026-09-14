@@ -6,6 +6,8 @@ import { authRouter } from './routes/auth.routes';
 import { pacientesRouter } from './routes/pacientes.routes';
 import { especialidadesRouter } from './routes/especialidades.routes';
 import { profesionalesRouter } from './routes/profesionales.routes';
+import { consultoriosRouter } from './routes/consultorios.routes';
+import { agendasRouter } from './routes/agendas.routes';
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/pacientes', pacientesRouter);
 app.use('/api/v1/especialidades', especialidadesRouter);
 app.use('/api/v1/profesionales', profesionalesRouter);
+app.use('/api/v1/consultorios', consultoriosRouter);
+app.use('/api/v1/agendas', agendasRouter);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

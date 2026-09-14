@@ -28,6 +28,8 @@ Límites del sistema:
 
 - Separación de identidad civil (`PERSONA`) y credenciales (`USUARIO`), permitiendo que una persona cumpla roles clínicos y profesionales sin duplicar datos personales.
 - Autoservicio del paciente: la administración y edición de datos de contacto propios (teléfono, correo) por parte del usuario con rol `PACIENTE` forma parte integral del alcance de `feat-005` (Portal del paciente y reserva de turnos), mientras que la cobertura médica/obra social es administrada exclusivamente por el personal del centro de salud (recepcionista/administrador).
+- Modelo de profesionales y especialidades (`feat-003`): relación N:M entre `PROFESIONAL` y `ESPECIALIDAD` con atributos de matrícula profesional, estado y sincronización transaccional de especialidades.
+- Modelo de consultorios y configuración de agendas (`feat-004`): `CONSULTORIO` (con número identificatorio y ubicación física) y `AGENDA` (día de la semana, horario inicio/fin, duración de turno en minutos), con validación de no solapamiento horario tanto por profesional como por consultorio.
 - Sin dependencias de proveedores externos ni pasarelas de pago en esta fase.
 
 ## Despliegue y operación
@@ -41,7 +43,8 @@ Límites del sistema:
 
 1. **Superposición de turnos por concurrencia:** Mitigado mediante transacciones y bloqueos a nivel de base de datos en la confirmación del turno.
 2. **Exposición de datos personales y médicos:** Mitigado con hash bcrypt de contraseñas, cookies de sesión `HttpOnly`, `Secure`, `SameSite` y filtrado estricto por rol.
+3. **Superposición horaria de agendas:** Mitigado con verificación en capa de servicios y transacciones que impiden doble asignación horaria para un mismo profesional o en un mismo consultorio.
 
 ## ADR pendientes
 
-Ninguno pendiente de definición inicial. Decisiones registradas en `docs/decisions.md`: ADR-001, ADR-002, ADR-003, ADR-004.
+Ninguno pendiente de definición inicial. Decisiones registradas en `docs/decisions.md`: ADR-001, ADR-002, ADR-003, ADR-004, ADR-005.

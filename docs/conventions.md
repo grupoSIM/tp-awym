@@ -13,6 +13,15 @@
   - *Fecha de nacimiento:* Obligatoria, no futura y con antigüedad máxima verosímil de 125 años.
   - *Teléfono:* Opcional, formato internacional o local (7 a 20 dígitos y símbolos `+`, `-`, espacios).
   - *Obra social / Cobertura médica:* Texto libre de entre 3 y 100 caracteres.
+- **Validación de profesionales y especialidades:**
+  - *Matrícula:* Texto único de 3 a 30 caracteres alfanuméricos.
+  - *Especialidades:* Nombre único de 3 a 100 caracteres alfabéticos; asociación N:M sin duplicados.
+- **Validación de consultorios y agendas médicas:**
+  - *Consultorio:* Número/identificador único de 1 a 20 caracteres; nombre o ubicación descriptiva de 2 a 100 caracteres.
+  - *Día de la semana:* Entero entre 0 (domingo) y 6 (sábado) o 1 a 7 según convención semanal.
+  - *Horarios:* Formato `HH:mm`; `hora_inicio` estrictamente anterior a `hora_fin`.
+  - *Duración de turno:* Entero en minutos (mínimo 5, máximo 120; comúnmente 15, 20, 30 o 60 minutos).
+  - *Restricción de solapamiento:* No se admiten franjas horarias superpuestas para el mismo profesional ni para el mismo consultorio en el mismo día.
 - **Usabilidad y Accesibilidad (WCAG 2.1 / 2.2 Nivel AA):**
   - *Navegación por teclado:* Enlace de salto al contenido (`.skip-link` hacia `#main-content`) e indicadores de foco visibles de alto contraste (`outline: 3px solid #0d6efd`).
   - *Formularios y semántica:* Todo control debe poseer etiqueta `<label for="...">`, atributo `novalidate` en `<form>`, y vincular mensajes de error con `[attr.aria-describedby]` y `[attr.aria-invalid]`.

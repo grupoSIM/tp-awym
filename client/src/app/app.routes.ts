@@ -6,6 +6,9 @@ import { PacienteFormComponent } from './features/pacientes/paciente-form.compon
 import { EspecialidadesComponent } from './features/especialidades/especialidades.component';
 import { ProfesionalesListComponent } from './features/profesionales/profesionales-list.component';
 import { ProfesionalFormComponent } from './features/profesionales/profesional-form.component';
+import { ConsultoriosComponent } from './features/consultorios/consultorios.component';
+import { AgendasListComponent } from './features/agendas/agendas-list.component';
+import { AgendaFormComponent } from './features/agendas/agenda-form.component';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { roleGuard } from './core/guards/role.guard';
@@ -63,6 +66,30 @@ export const routes: Routes = [
     component: ProfesionalFormComponent,
     canActivate: [authGuard, roleGuard],
     data: { roles: ['ADMIN'] },
+  },
+  {
+    path: 'consultorios',
+    component: ConsultoriosComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['RECEPCIONISTA', 'ADMIN', 'PROFESIONAL'] },
+  },
+  {
+    path: 'agendas',
+    component: AgendasListComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['RECEPCIONISTA', 'ADMIN', 'PROFESIONAL'] },
+  },
+  {
+    path: 'agendas/nueva',
+    component: AgendaFormComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['RECEPCIONISTA', 'ADMIN', 'PROFESIONAL'] },
+  },
+  {
+    path: 'agendas/:id/editar',
+    component: AgendaFormComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['RECEPCIONISTA', 'ADMIN', 'PROFESIONAL'] },
   },
   { path: '**', redirectTo: 'login' },
 ];

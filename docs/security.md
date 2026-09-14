@@ -19,9 +19,13 @@
 - **Cifrado en tránsito:** Toda comunicación cliente-servidor forzada por HTTPS / TLS.
 - **Almacenamiento de credenciales:** Uso obligatorio de algoritmo `bcrypt` con factor de costo adecuado (mínimo 10 rondas); nunca texto plano.
 - **Gestión de sesiones:** Cookies seguras con flags `HttpOnly`, `Secure` y `SameSite=Strict` o `Lax`.
-- **Control de acceso basado en roles (RBAC):** Validación en cada endpoint del backend verificando los permisos específicos del rol autenticado.
+- **Control de acceso basado en roles (RBAC):** Validación en cada endpoint del backend verificando los permisos específicos del rol autenticado:
+  - `PACIENTE`: Acceso exclusivo a su perfil y turnos propios; sin acceso a administración de agendas, consultorios ni profesionales.
+  - `PROFESIONAL`: Consulta de su propia agenda y asignaciones de turnos.
+  - `RECEPCIONISTA`: Consulta y reserva de turnos, consulta de profesionales/consultorios/agendas.
+  - `ADMIN`: Gestión total (CRUD) de usuarios, roles, pacientes, profesionales, especialidades, consultorios y configuración de agendas.
 - **Validación y sanitización:** Validación de entrada estricta en backend para todos los payloads JSON.
-- **Prevención de condiciones de carrera:** Transacciones con nivel de aislamiento adecuado para reservar y confirmar turnos.
+- **Prevención de condiciones de carrera:** Transacciones con nivel de aislamiento adecuado para reservar y confirmar turnos, y bloqueos lógicos en la verificación de solapamientos de agendas.
 
 ## Retención y borrado
 

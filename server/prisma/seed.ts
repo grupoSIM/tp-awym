@@ -67,6 +67,9 @@ async function main() {
     await prisma.paciente.deleteMany({
       where: { persona: { dni: u.dni } },
     });
+    await prisma.agenda.deleteMany({
+      where: { profesional: { persona: { dni: u.dni } } },
+    });
     await prisma.profesionalEspecialidad.deleteMany({
       where: { profesional: { persona: { dni: u.dni } } },
     });
@@ -122,7 +125,66 @@ async function main() {
     });
   }
 
-  console.log('Seed completado con éxito: 4 usuarios y catálogo de especialidades creados');
+  // Crear consultorios base
+  const consultoriosBase = [
+    { numero: 'Consultorio 101', ubicacion: 'Ala Norte', piso: 'Planta Baja' },
+    { numero: 'Consultorio 102', ubicacion: 'Ala Sur', piso: 'Planta Baja' },
+    { numero: 'Consultorio 201', ubicacion: 'Ala Este', piso: 'Primer Piso' },
+  ];
+
+  const consultoriosCreados = [];
+  for (const c of consultoriosBase) {
+    let cons = await prisma.consultorio.findUnique({ where: { numero: c.numero } });
+    if (!cons) {
+      cons = await prisma.consultorio.create({ data: c });
+    }
+    consultoriosCreados.push(cons);
+  }
+
+  // Crear agenda para Dra. Maria Gomez (profesional)
+  const draMaria = await prisma.profesional.findFirst({
+    where: { persona: { dni: '33333333' } },
+  });
+
+  if (draMaria && consultoriosCreados.length >= 2) {
+    await prisma.agenda.deleteMany({
+      where: { id_profesional: draMaria.id_profesional },
+    });
+
+    await prisma.agenda.createMany({
+      data: [
+        {
+          id_profesional: draMaria.id_profesional,
+          id_consultorio: consultoriosCreados[0].id_consultorio,
+          dia_semana: 1, // Lunes
+          hora_inicio: '08:00',
+          hora_fin: '12:00',
+          duracion_minutos: 30,
+          activo: true,
+        },
+        {
+          id_profesional: draMaria.id_profesional,
+          id_consultorio: consultoriosCreados[1].id_consultorio,
+          dia_semana: 3, // Miércoles
+          hora_inicio: '14:00',
+          hora_fin: '18:00',
+          duracion_minutos: 30,
+          activo: true,
+        },
+        {
+          id_profesional: draMaria.id_profesional,
+          id_consultorio: consultoriosCreados[0].id_consultorio,
+          dia_semana: 5, // Viernes
+          hora_inicio: '09:00',
+          hora_fin: '13:00',
+          duracion_minutos: 30,
+          activo: true,
+        },
+      ],
+    });
+  }
+
+  console.log('Seed completado con éxito: 4 usuarios, especialidades, consultorios y agendas creados');
 }
 
 main()

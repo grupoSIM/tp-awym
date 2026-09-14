@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc && tsc prisma/seed.ts --outDir dist --module CommonJS --target ES2022 --moduleResolution node --esModuleInterop --skipLibCheck",
     "start": "node dist/index.js",
-    "test": "vitest run",
+    "test": "vitest run --fileParallelism=false",
     "seed": "tsx prisma/seed.ts",
     "seed:prod": "node dist/seed.js",
     "prisma:generate": "prisma generate",

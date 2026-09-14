@@ -65,6 +65,15 @@
           </div>
         </div>
       </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Configuración de Mi Agenda</h5>
+            <p class="card-text text-muted small">Configure sus días de atención semanal, horarios y consultorios.</p>
+            <a routerLink="/agendas" class="btn btn-outline-primary btn-sm">Mi Agenda</a>
+          </div>
+        </div>
+      </div>
     }
 
     @if (user?.rol === 'RECEPCIONISTA' || user?.rol === 'ADMIN') {
@@ -98,6 +107,24 @@
       <div class="col-12 col-md-6 col-lg-4">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
           <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Consultorios Físicos</h5>
+            <p class="card-text text-muted small">Administración de consultorios, sectores y espacios de atención.</p>
+            <a routerLink="/consultorios" class="btn btn-outline-primary btn-sm">Consultorios</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-primary">Agendas Médicas</h5>
+            <p class="card-text text-muted small">Planificación y configuración de disponibilidad horaria y consultorios.</p>
+            <a routerLink="/agendas" class="btn btn-outline-primary btn-sm">Agendas</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
+          <div class="card-body">
             <h5 class="card-title fw-bold text-primary">Gestión de Turnos</h5>
             <p class="card-text text-muted small">Asignar, confirmar, cancelar y reprogramar turnos.</p>
             <button class="btn btn-outline-secondary btn-sm" disabled>Turnos</button>
@@ -107,15 +134,6 @@
     }
 
     @if (user?.rol === 'ADMIN') {
-      <div class="col-12 col-md-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
-          <div class="card-body">
-            <h5 class="card-title fw-bold text-primary">Agendas y Consultorios</h5>
-            <p class="card-text text-muted small">Configurar disponibilidad, horarios y consultorios físicos.</p>
-            <button class="btn btn-outline-secondary btn-sm" disabled>Configurar</button>
-          </div>
-        </div>
-      </div>
       <div class="col-12 col-md-6 col-lg-4">
         <div class="card h-100 border-0 shadow-sm rounded-4 p-3">
           <div class="card-body">

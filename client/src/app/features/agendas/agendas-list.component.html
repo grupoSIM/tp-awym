@@ -1,0 +1,205 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
+      <span aria-hidden="true">⚕</span>
+      <span>Gestión de Turnos</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+      @if (user) {
+        <div class="text-white text-end d-none d-sm-block">
+          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
+          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
+        </div>
+      }
+      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content" class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Agendas Médicas</li>
+        </ol>
+      </nav>
+      <h1 class="h3 fw-bold text-dark mb-0">Configuración de Agendas Médicas</h1>
+      <p class="text-muted small mb-0">Planificación semanal de atención médica, franjas horarias y asignación de consultorios.</p>
+    </div>
+
+    @if (canManage) {
+      <a routerLink="/agendas/nueva" class="btn btn-primary px-3 shadow-sm d-flex align-items-center gap-2">
+        <span aria-hidden="true">+</span>
+        <span>Nueva Agenda</span>
+      </a>
+    }
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <div class="row g-3">
+      @if (user?.rol !== 'PROFESIONAL') {
+        <div class="col-12 col-md-3">
+          <label for="filtro-profesional" class="form-label small fw-semibold text-muted">Profesional</label>
+          <select
+            id="filtro-profesional"
+            class="form-select bg-light"
+            [(ngModel)]="filtroProfesional"
+            (ngModelChange)="onFiltroChange()"
+          >
+            <option [ngValue]="undefined">Todos los profesionales</option>
+            @for (p of profesionales; track p.id_profesional) {
+              <option [ngValue]="p.id_profesional">
+                {{ p.persona.apellido }}, {{ p.persona.nombre }} ({{ p.matricula }})
+              </option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="col-12" [ngClass]="user?.rol === 'PROFESIONAL' ? 'col-md-4' : 'col-md-3'">
+        <label for="filtro-consultorio" class="form-label small fw-semibold text-muted">Consultorio</label>
+        <select
+          id="filtro-consultorio"
+          class="form-select bg-light"
+          [(ngModel)]="filtroConsultorio"
+          (ngModelChange)="onFiltroChange()"
+        >
+          <option [ngValue]="undefined">Todos los consultorios</option>
+          @for (c of consultorios; track c.id_consultorio) {
+            <option [ngValue]="c.id_consultorio">
+              {{ c.numero }} @if (c.ubicacion) { - {{ c.ubicacion }} }
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="col-12" [ngClass]="user?.rol === 'PROFESIONAL' ? 'col-md-4' : 'col-md-3'">
+        <label for="filtro-dia" class="form-label small fw-semibold text-muted">Día de atención</label>
+        <select
+          id="filtro-dia"
+          class="form-select bg-light"
+          [(ngModel)]="filtroDia"
+          (ngModelChange)="onFiltroChange()"
+        >
+          <option [ngValue]="undefined">Todos los días</option>
+          @for (d of diasSemana; track d.id) {
+            <option [ngValue]="d.id">{{ d.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-12" [ngClass]="user?.rol === 'PROFESIONAL' ? 'col-md-4' : 'col-md-3'">
+        <label for="filtro-estado-agenda" class="form-label small fw-semibold text-muted">Estado</label>
+        <select
+          id="filtro-estado-agenda"
+          class="form-select bg-light"
+          [(ngModel)]="estadoFiltro"
+          (ngModelChange)="onFiltroChange()"
+        >
+          <option value="activo">Solo activas</option>
+          <option value="inactivo">Solo inactivas</option>
+          <option value="todos">Todos los estados</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Agendas -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-4">Profesional</th>
+            <th scope="col">Consultorio</th>
+            <th scope="col">Día</th>
+            <th scope="col">Horario</th>
+            <th scope="col">Turno</th>
+            <th scope="col">Estado</th>
+            @if (canManage) {
+              <th scope="col" class="text-end pe-4">Acciones</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading) {
+            <tr>
+              <td [attr.colspan]="canManage ? 7 : 6" class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                Cargando agendas médicas...
+              </td>
+            </tr>
+          } @else if (agendas.length === 0) {
+            <tr>
+              <td [attr.colspan]="canManage ? 7 : 6" class="text-center py-5 text-muted">
+                No se encontraron agendas médicas con los filtros seleccionados.
+              </td>
+            </tr>
+          } @else {
+            @for (a of agendas; track a.id_agenda) {
+              <tr>
+                <td class="ps-4">
+                  <div class="fw-semibold text-dark">
+                    {{ a.profesional?.persona?.apellido }}, {{ a.profesional?.persona?.nombre }}
+                  </div>
+                  <div class="small text-muted">Mat. {{ a.profesional?.matricula }}</div>
+                </td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ a.consultorio?.numero }}</div>
+                  <div class="small text-muted">{{ a.consultorio?.ubicacion || 'Sin ubicación' }}</div>
+                </td>
+                <td>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                    {{ getNombreDia(a.dia_semana) }}
+                  </span>
+                </td>
+                <td class="fw-semibold text-dark">
+                  {{ a.hora_inicio }} - {{ a.hora_fin }} hs
+                </td>
+                <td class="text-muted">
+                  {{ a.duracion_minutos }} min
+                </td>
+                <td>
+                  @if (a.activo) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Activa</span>
+                  } @else {
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Inactiva</span>
+                  }
+                </td>
+                @if (canManage) {
+                  <td class="text-end pe-4">
+                    <div class="btn-group btn-group-sm">
+                      <a
+                        [routerLink]="['/agendas', a.id_agenda, 'editar']"
+                        class="btn btn-outline-primary"
+                        [attr.aria-label]="'Editar agenda de ' + a.profesional?.persona?.apellido + ' los ' + getNombreDia(a.dia_semana)"
+                      >
+                        Editar
+                      </a>
+                      <button
+                        class="btn"
+                        [ngClass]="a.activo ? 'btn-outline-danger' : 'btn-outline-success'"
+                        (click)="toggleEstado(a)"
+                        [attr.aria-label]="(a.activo ? 'Desactivar' : 'Activar') + ' agenda de ' + a.profesional?.persona?.apellido + ' los ' + getNombreDia(a.dia_semana)"
+                      >
+                        {{ a.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>

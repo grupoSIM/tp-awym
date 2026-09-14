@@ -1,0 +1,226 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
+      <span aria-hidden="true">⚕</span>
+      <span>Gestión de Turnos</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+      @if (user) {
+        <div class="text-white text-end d-none d-sm-block">
+          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
+          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
+        </div>
+      }
+      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content" class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Consultorios</li>
+        </ol>
+      </nav>
+      <h1 class="h3 fw-bold text-dark mb-0">Gestión de Consultorios</h1>
+      <p class="text-muted small mb-0">Catálogo de consultorios físicos y espacios de atención del centro de salud.</p>
+    </div>
+
+    @if (canManage) {
+      <button class="btn btn-primary px-3 shadow-sm d-flex align-items-center gap-2" (click)="openNuevoModal()">
+        <span aria-hidden="true">+</span>
+        <span>Nuevo Consultorio</span>
+      </button>
+    }
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+    <div class="row g-3">
+      <div class="col-12 col-md-8">
+        <label for="buscar-consultorio" class="form-label small fw-semibold text-muted">Buscar consultorio</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0" id="buscar-icon" aria-hidden="true">🔍</span>
+          <input
+            id="buscar-consultorio"
+            type="text"
+            class="form-control bg-light border-start-0"
+            placeholder="Buscar por número, ubicación o piso..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+            aria-label="Buscar consultorio por número o ubicación"
+          />
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <label for="filtro-estado" class="form-label small fw-semibold text-muted">Estado</label>
+        <select
+          id="filtro-estado"
+          class="form-select bg-light"
+          [(ngModel)]="estadoFiltro"
+          (ngModelChange)="onFiltroEstadoChange()"
+        >
+          <option value="activo">Solo activos</option>
+          <option value="inactivo">Solo inactivos</option>
+          <option value="todos">Todos los estados</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Consultorios -->
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="ps-4">Número</th>
+            <th scope="col">Ubicación</th>
+            <th scope="col">Piso</th>
+            <th scope="col">Estado</th>
+            @if (canManage) {
+              <th scope="col" class="text-end pe-4">Acciones</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading) {
+            <tr>
+              <td [attr.colspan]="canManage ? 5 : 4" class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                Cargando consultorios...
+              </td>
+            </tr>
+          } @else if (consultorios.length === 0) {
+            <tr>
+              <td [attr.colspan]="canManage ? 5 : 4" class="text-center py-5 text-muted">
+                No se encontraron consultorios con los filtros especificados.
+              </td>
+            </tr>
+          } @else {
+            @for (c of consultorios; track c.id_consultorio) {
+              <tr>
+                <td class="ps-4 fw-semibold text-dark">{{ c.numero }}</td>
+                <td class="text-muted">{{ c.ubicacion || 'Sin ubicación' }}</td>
+                <td class="text-muted">{{ c.piso || 'Sin piso' }}</td>
+                <td>
+                  @if (c.activo) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
+                  } @else {
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Inactivo</span>
+                  }
+                </td>
+                @if (canManage) {
+                  <td class="text-end pe-4">
+                    <div class="btn-group btn-group-sm">
+                      <button
+                        class="btn btn-outline-primary"
+                        (click)="openEditarModal(c)"
+                        [attr.aria-label]="'Editar consultorio ' + c.numero"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        class="btn"
+                        [ngClass]="c.activo ? 'btn-outline-danger' : 'btn-outline-success'"
+                        (click)="toggleEstado(c)"
+                        [attr.aria-label]="(c.activo ? 'Desactivar' : 'Activar') + ' consultorio ' + c.numero"
+                      >
+                        {{ c.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Modal de Alta / Edición -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-labelledby="modal-consultorio-title" aria-modal="true" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h2 class="modal-title h5 fw-bold" id="modal-consultorio-title">
+            {{ editingId ? 'Editar Consultorio' : 'Nuevo Consultorio' }}
+          </h2>
+          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar modal"></button>
+        </div>
+        <div class="modal-body py-3">
+          @if (formError) {
+            <div class="alert alert-danger small py-2" role="alert">
+              {{ formError }}
+            </div>
+          }
+
+          <form (ngSubmit)="guardarConsultorio()" novalidate>
+            <div class="mb-3">
+              <label for="input-numero" class="form-label small fw-semibold">Número o Identificador *</label>
+              <input
+                id="input-numero"
+                type="text"
+                class="form-control"
+                placeholder="Ej. Consultorio 101, Box A..."
+                [(ngModel)]="formNumero"
+                name="formNumero"
+                required
+                maxlength="50"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="input-ubicacion" class="form-label small fw-semibold">Ubicación</label>
+              <input
+                id="input-ubicacion"
+                type="text"
+                class="form-control"
+                placeholder="Ej. Ala Norte, Sector Consultorios Externos..."
+                [(ngModel)]="formUbicacion"
+                name="formUbicacion"
+                maxlength="150"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="input-piso" class="form-label small fw-semibold">Piso / Nivel</label>
+              <input
+                id="input-piso"
+                type="text"
+                class="form-control"
+                placeholder="Ej. Planta Baja, Piso 1, Subsuelo..."
+                [(ngModel)]="formPiso"
+                name="formPiso"
+                maxlength="50"
+              />
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-2">
+              <button type="button" class="btn btn-outline-secondary" (click)="closeModal()">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary px-4" [disabled]="submitting">
+                @if (submitting) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                {{ editingId ? 'Guardar Cambios' : 'Crear Consultorio' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}

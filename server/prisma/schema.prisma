@@ -73,6 +73,7 @@ model Profesional {
 
   persona        Persona                   @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
   especialidades ProfesionalEspecialidad[]
+  agendas        Agenda[]
 
   @@map("profesionales")
 }
@@ -99,4 +100,36 @@ model ProfesionalEspecialidad {
 
   @@id([id_profesional, id_especialidad])
   @@map("profesionales_especialidades")
+}
+
+model Consultorio {
+  id_consultorio Int      @id @default(autoincrement())
+  numero         String   @unique @db.VarChar(50)
+  ubicacion      String?  @db.VarChar(150)
+  piso           String?  @db.VarChar(50)
+  activo         Boolean  @default(true)
+  creado_en      DateTime @default(now())
+  actualizado_en DateTime @updatedAt
+
+  agendas Agenda[]
+
+  @@map("consultorios")
+}
+
+model Agenda {
+  id_agenda        Int      @id @default(autoincrement())
+  id_profesional   Int
+  id_consultorio   Int
+  dia_semana       Int      // 1=Lunes .. 7=Domingo
+  hora_inicio      String   @db.VarChar(5) // "HH:mm"
+  hora_fin         String   @db.VarChar(5) // "HH:mm"
+  duracion_minutos Int      // Duración del turno en minutos
+  activo           Boolean  @default(true)
+  creado_en        DateTime @default(now())
+  actualizado_en   DateTime @updatedAt
+
+  profesional Profesional @relation(fields: [id_profesional], references: [id_profesional], onDelete: Restrict)
+  consultorio Consultorio @relation(fields: [id_consultorio], references: [id_consultorio], onDelete: Restrict)
+
+  @@map("agendas")
 }
