@@ -26,6 +26,9 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
 
   beforeAll(async () => {
     // Limpieza previa
+    await prisma.turno.deleteMany({
+      where: { profesional: { persona: { dni: { startsWith: '88888' } } } },
+    });
     await prisma.agenda.deleteMany({
       where: {
         OR: [
@@ -132,6 +135,9 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
   });
 
   afterAll(async () => {
+    await prisma.turno.deleteMany({
+      where: { profesional: { persona: { dni: { startsWith: '88888' } } } },
+    });
     await prisma.agenda.deleteMany({
       where: {
         OR: [
@@ -389,6 +395,65 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
         .send({ activo: false });
       expect(resBaja.status).toBe(200);
       expect(resBaja.body.activo).toBe(false);
+    });
+
+    it('debe advertir y bloquear desactivación de agenda con turnos confirmados, y permitirla si se confirma cancelación (TEST-038)', async () => {
+      // 1. Reactivar agenda para la prueba
+      await request(app)
+        .patch(`/api/v1/agendas/${testAgendaId}/estado`)
+        .set('Cookie', adminCookie)
+        .send({ activo: true });
+
+      // 2. Crear un turno confirmado asociado a la agenda
+      const fechaFutura = new Date();
+      fechaFutura.setDate(fechaFutura.getDate() + 7);
+      const fechaIso = fechaFutura.toISOString().split('T')[0];
+
+      const paciente = await prisma.paciente.findFirst();
+      const esp = await prisma.especialidad.findFirst();
+
+      const turno = await prisma.turno.create({
+        data: {
+          id_paciente: paciente!.id_paciente,
+          id_profesional: testProfesionalId1,
+          id_especialidad: esp!.id_especialidad,
+          id_agenda: testAgendaId,
+          id_consultorio: testConsultorioId1,
+          fecha: new Date(fechaIso),
+          hora_inicio: '08:00',
+          hora_fin: '08:20',
+          estado: 'CONFIRMADO',
+          activo: true,
+        },
+      });
+
+      // 3. Intento de desactivar sin confirmar cancelación -> 409 Conflict
+      const resBloqueo = await request(app)
+        .patch(`/api/v1/agendas/${testAgendaId}/estado`)
+        .set('Cookie', adminCookie)
+        .send({ activo: false });
+
+      expect(resBloqueo.status).toBe(409);
+      expect(resBloqueo.body.turnosPendientes).toBe(1);
+      expect(resBloqueo.body.error).toContain('turno(s) confirmado(s) pendiente(s)');
+
+      // 4. Intento de desactivar con cancelarTurnosPendientes: true -> 200 OK
+      const resCancelacion = await request(app)
+        .patch(`/api/v1/agendas/${testAgendaId}/estado`)
+        .set('Cookie', adminCookie)
+        .send({ activo: false, cancelarTurnosPendientes: true });
+
+      expect(resCancelacion.status).toBe(200);
+      expect(resCancelacion.body.activo).toBe(false);
+
+      // 5. Verificar que el turno pasó a CANCELADO en la BD
+      const turnoActualizado = await prisma.turno.findUnique({
+        where: { id_turno: turno.id_turno },
+      });
+      expect(turnoActualizado?.estado).toBe('CANCELADO');
+
+      // Limpieza del turno de prueba
+      await prisma.turno.deleteMany({ where: { id_turno: turno.id_turno } });
     });
   });
 

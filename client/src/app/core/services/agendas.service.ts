@@ -47,7 +47,7 @@ export class AgendasService {
     return this.http.put<Agenda>(`${this.apiUrl}/${id}`, dto, { withCredentials: true });
   }
 
-  toggleEstado(id: number, activo: boolean): Observable<Agenda> {
-    return this.http.patch<Agenda>(`${this.apiUrl}/${id}/estado`, { activo }, { withCredentials: true });
+  toggleEstado(id: number, activo: boolean, cancelarTurnosPendientes = false): Observable<Agenda> {
+    return this.http.patch<Agenda>(`${this.apiUrl}/${id}/estado`, { activo, cancelarTurnosPendientes }, { withCredentials: true });
   }
 }

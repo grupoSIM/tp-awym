@@ -1,5 +1,5 @@
 project: "tp-awym-gemini"
-active_feature: feat-004
+active_feature: feat-005
 phase: done
 updated_at: "2026-09-14"
 
@@ -10,42 +10,42 @@ decisions: []
 approvals:
   architecture:
     applicability: not_required
-    rationale: "La gestión de consultorios y configuración de agendas médicas se ajusta a la arquitectura y stack aprobados en ADR-001 a ADR-005."
+    rationale: "El portal del paciente y la reserva de turnos se ajustan a la arquitectura y stack aprobados en ADR-001 a ADR-005."
   specification:
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-14T18:09:00-03:00"
-    reference: "specs/features/feat-004/spec-review.md"
+    approved_at: "2026-09-14T21:23:45-03:00"
+    reference: "specs/features/feat-005/spec-review.md"
     bundle:
       algorithm: sha256
-      digest: b852c902c4cca2db0daab98ba761d382f05997a0aa0644f45ccfeb2b56c2c30b
+      digest: 8cbb2a90ce6b84fc2a7aa5ecea55a49bfcae68883c615c9eea55c59fcd3fc721
       files:
-        - path: specs/features/feat-004/acceptance.md
-          bytes: 4453
-          sha256: 87d71843cf756fb1e5a770a8a4300fba549a7e9c768f7c0b23f982e67d4426a6
-        - path: specs/features/feat-004/design.md
-          bytes: 5205
-          sha256: 9089068d528877d0ec59d974dd0b23d25ce79b49c5869542f6378400ceae03db
-        - path: specs/features/feat-004/requirements.md
-          bytes: 5120
-          sha256: 4e0091c1226633a3c43e9aa9005c67b2c9f0b19be35b18041d04aa66cbb58143
-        - path: specs/features/feat-004/tasks.md
-          bytes: 1633
-          sha256: dedc097f492e911eba3a03fae17a78d5914a3b332b55f7658961defdf5120bee
-        - path: specs/features/feat-004/test-plan.md
-          bytes: 3401
-          sha256: 70ad7084803a7ee5532da55ed3d11be0d2b33df245d3e347f9eee8d6f91d4a4c
+        - path: specs/features/feat-005/acceptance.md
+          bytes: 4932
+          sha256: fb820cd8fd0b600e4a7c75aa58e59514aa20ca5925b89728bff3f652ebc597e9
+        - path: specs/features/feat-005/design.md
+          bytes: 6063
+          sha256: 1ac89fd8879b8676d57f26b285168698458e72ac3c222279418fd93292a92a5d
+        - path: specs/features/feat-005/requirements.md
+          bytes: 5262
+          sha256: e759efe1bb2680185245d0cde948cdebf6b4af1d1af5e3a977efb26363915c4f
+        - path: specs/features/feat-005/tasks.md
+          bytes: 1638
+          sha256: e189a3b023a7061b964cab744928c1cf6e9a7a4cce0bfc1a1d7da9f993f395a4
+        - path: specs/features/feat-005/test-plan.md
+          bytes: 3526
+          sha256: 63daf0f598133afdc83192f6373f2545ae9a46c480d0279785f4f513c92fe457
     review:
       status: pass
       reviewed_by: "tech-reviewer"
-      reviewed_at: "2026-09-14T18:08:30-03:00"
-      reference: "specs/features/feat-004/spec-review.md"
-      specification_digest: b852c902c4cca2db0daab98ba761d382f05997a0aa0644f45ccfeb2b56c2c30b
+      reviewed_at: "2026-09-14T21:23:30-03:00"
+      reference: "specs/features/feat-005/spec-review.md"
+      specification_digest: 8cbb2a90ce6b84fc2a7aa5ecea55a49bfcae68883c615c9eea55c59fcd3fc721
   publication:
     status: approved
     approved_by: "José Chamorro"
-    approved_at: "2026-09-14T18:40:00-03:00"
-    reference: "specs/features/feat-004/evidence.md"
+    approved_at: "2026-09-14T22:53:10-03:00"
+    reference: "specs/features/feat-005/evidence.md"
 
 execution:
   implemented_by: "antigravity-developer"
@@ -53,9 +53,9 @@ execution:
 quality:
   status: pass
   reviewed_by: "qa-verifier"
-  reviewed_at: "2026-09-14T18:22:00-03:00"
-  reference: "specs/features/feat-004/evidence.md"
-  specification_digest: b852c902c4cca2db0daab98ba761d382f05997a0aa0644f45ccfeb2b56c2c30b
+  reviewed_at: "2026-09-14T21:49:00-03:00"
+  reference: "specs/features/feat-005/evidence.md"
+  specification_digest: 8cbb2a90ce6b84fc2a7aa5ecea55a49bfcae68883c615c9eea55c59fcd3fc721
 
 notes:
-  - Activación y especificación aprobadas para feat-004.
+  - Activación y especificación aprobadas para feat-005.

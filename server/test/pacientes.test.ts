@@ -20,6 +20,9 @@ describe('Pacientes Module Integration Tests', () => {
 
   beforeAll(async () => {
     // Limpieza
+    await prisma.turno.deleteMany({
+      where: { paciente: { persona: { dni: { startsWith: '88888' } } } },
+    });
     await prisma.paciente.deleteMany({
       where: { persona: { dni: { startsWith: '88888' } } },
     });
@@ -94,6 +97,9 @@ describe('Pacientes Module Integration Tests', () => {
   });
 
   afterAll(async () => {
+    await prisma.turno.deleteMany({
+      where: { paciente: { persona: { dni: { startsWith: '88888' } } } },
+    });
     await prisma.paciente.deleteMany({
       where: { persona: { dni: { startsWith: '88888' } } },
     });

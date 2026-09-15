@@ -124,7 +124,23 @@ export class AgendasListComponent implements OnInit {
           this.cargarAgendas();
         },
         error: (err) => {
-          alert(err.error?.error || `Error al ${accion} la agenda`);
+          if (err.status === 409 && err.error?.turnosPendientes) {
+            const confirmarCancelacion = confirm(
+              `Atención: La agenda cuenta con ${err.error.turnosPendientes} turno(s) confirmado(s) pendiente(s).\n\n¿Desea confirmar la cancelación en lote de dichos turnos y proceder con la desactivación de la agenda?`
+            );
+            if (confirmarCancelacion) {
+              this.agendasService.toggleEstado(a.id_agenda, false, true).subscribe({
+                next: () => {
+                  this.cargarAgendas();
+                },
+                error: (err2) => {
+                  alert(err2.error?.error || 'Error al desactivar la agenda y cancelar los turnos.');
+                },
+              });
+            }
+          } else {
+            alert(err.error?.error || `Error al ${accion} la agenda`);
+          }
         },
       });
     }

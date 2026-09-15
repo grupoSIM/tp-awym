@@ -1,4 +1,5 @@
 import { prisma } from '../prisma';
+import { EstadoTurno } from '@prisma/client';
 
 export interface CreateAgendaDto {
   id_profesional: number;
@@ -320,7 +321,7 @@ export class AgendasService {
     });
   }
 
-  async toggleEstado(id: number, activo: boolean) {
+  async toggleEstado(id: number, activo: boolean, cancelarTurnosPendientes = false) {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.agenda.findUnique({
         where: { id_agenda: id },
@@ -330,6 +331,46 @@ export class AgendasService {
         const error: any = new Error('Agenda no encontrada');
         error.status = 404;
         throw error;
+      }
+
+      // Si se está desactivando (activo=false), verificar si tiene turnos confirmados pendientes
+      if (!activo) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const turnosConfirmados = await tx.turno.count({
+          where: {
+            id_agenda: id,
+            estado: EstadoTurno.CONFIRMADO,
+            activo: true,
+            fecha: { gte: today },
+          },
+        });
+
+        if (turnosConfirmados > 0) {
+          if (!cancelarTurnosPendientes) {
+            const error: any = new Error(
+              `La agenda posee ${turnosConfirmados} turno(s) confirmado(s) pendiente(s). Debe confirmar su cancelación para poder desactivarla.`
+            );
+            error.status = 409;
+            error.turnosPendientes = turnosConfirmados;
+            throw error;
+          }
+
+          // Si confirmó explícitamente la cancelación en lote
+          await tx.turno.updateMany({
+            where: {
+              id_agenda: id,
+              estado: EstadoTurno.CONFIRMADO,
+              activo: true,
+              fecha: { gte: today },
+            },
+            data: {
+              estado: EstadoTurno.CANCELADO,
+              motivo_consulta: 'Cancelado automáticamente por baja de agenda médica',
+            },
+          });
+        }
       }
 
       // Si se está reactivando (activo=true), verificar que no genere conflicto con otra agenda vigente

@@ -9,6 +9,9 @@ import { ProfesionalFormComponent } from './features/profesionales/profesional-f
 import { ConsultoriosComponent } from './features/consultorios/consultorios.component';
 import { AgendasListComponent } from './features/agendas/agendas-list.component';
 import { AgendaFormComponent } from './features/agendas/agenda-form.component';
+import { PerfilPacienteComponent } from './features/portal/perfil-paciente.component';
+import { ReservaTurnoComponent } from './features/turnos/reserva-turno.component';
+import { MisTurnosComponent } from './features/turnos/mis-turnos.component';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { roleGuard } from './core/guards/role.guard';
@@ -90,6 +93,24 @@ export const routes: Routes = [
     component: AgendaFormComponent,
     canActivate: [authGuard, roleGuard],
     data: { roles: ['RECEPCIONISTA', 'ADMIN', 'PROFESIONAL'] },
+  },
+  {
+    path: 'portal/perfil',
+    component: PerfilPacienteComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['PACIENTE'] },
+  },
+  {
+    path: 'turnos/reservar',
+    component: ReservaTurnoComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['PACIENTE', 'RECEPCIONISTA', 'ADMIN'] },
+  },
+  {
+    path: 'turnos',
+    component: MisTurnosComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['PACIENTE', 'RECEPCIONISTA', 'ADMIN', 'PROFESIONAL'] },
   },
   { path: '**', redirectTo: 'login' },
 ];

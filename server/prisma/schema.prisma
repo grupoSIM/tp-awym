@@ -19,6 +19,13 @@ enum EstadoUsuario {
   INACTIVO
 }
 
+enum EstadoTurno {
+  CONFIRMADO
+  CANCELADO
+  ATENDIDO
+  AUSENTE
+}
+
 model Persona {
   id_persona       Int       @id @default(autoincrement())
   dni              String    @unique @db.VarChar(20)
@@ -45,6 +52,7 @@ model Paciente {
   actualizado_en DateTime @updatedAt
 
   persona Persona @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
+  turnos  Turno[]
 
   @@map("pacientes")
 }
@@ -74,6 +82,7 @@ model Profesional {
   persona        Persona                   @relation(fields: [id_persona], references: [id_persona], onDelete: Restrict)
   especialidades ProfesionalEspecialidad[]
   agendas        Agenda[]
+  turnos         Turno[]
 
   @@map("profesionales")
 }
@@ -87,6 +96,7 @@ model Especialidad {
   actualizado_en  DateTime @updatedAt
 
   profesionales ProfesionalEspecialidad[]
+  turnos        Turno[]
 
   @@map("especialidades")
 }
@@ -112,6 +122,7 @@ model Consultorio {
   actualizado_en DateTime @updatedAt
 
   agendas Agenda[]
+  turnos  Turno[]
 
   @@map("consultorios")
 }
@@ -130,6 +141,34 @@ model Agenda {
 
   profesional Profesional @relation(fields: [id_profesional], references: [id_profesional], onDelete: Restrict)
   consultorio Consultorio @relation(fields: [id_consultorio], references: [id_consultorio], onDelete: Restrict)
+  turnos      Turno[]
 
   @@map("agendas")
+}
+
+model Turno {
+  id_turno        Int         @id @default(autoincrement())
+  id_paciente     Int
+  id_profesional  Int
+  id_especialidad Int
+  id_agenda       Int?
+  id_consultorio  Int?
+  fecha           DateTime    @db.Date
+  hora_inicio     String      @db.VarChar(5) // "HH:mm"
+  hora_fin        String      @db.VarChar(5) // "HH:mm"
+  estado          EstadoTurno @default(CONFIRMADO)
+  motivo_consulta String?     @db.VarChar(255)
+  activo          Boolean     @default(true)
+  creado_en       DateTime    @default(now())
+  actualizado_en  DateTime    @updatedAt
+
+  paciente     Paciente     @relation(fields: [id_paciente], references: [id_paciente], onDelete: Restrict)
+  profesional  Profesional  @relation(fields: [id_profesional], references: [id_profesional], onDelete: Restrict)
+  especialidad Especialidad @relation(fields: [id_especialidad], references: [id_especialidad], onDelete: Restrict)
+  agenda       Agenda?      @relation(fields: [id_agenda], references: [id_agenda], onDelete: SetNull)
+  consultorio  Consultorio? @relation(fields: [id_consultorio], references: [id_consultorio], onDelete: SetNull)
+
+  @@index([id_profesional, fecha, hora_inicio])
+  @@index([id_paciente, fecha])
+  @@map("turnos")
 }

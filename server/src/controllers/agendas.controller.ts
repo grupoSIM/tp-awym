@@ -141,7 +141,7 @@ export class AgendasController {
         return;
       }
 
-      const { activo } = req.body;
+      const { activo, cancelarTurnosPendientes } = req.body;
       if (typeof activo !== 'boolean') {
         res.status(400).json({ error: 'El campo activo debe ser un booleano' });
         return;
@@ -158,11 +158,14 @@ export class AgendasController {
         }
       }
 
-      const actualizada = await agendasService.toggleEstado(id, activo);
+      const actualizada = await agendasService.toggleEstado(id, activo, Boolean(cancelarTurnosPendientes));
       res.json(actualizada);
     } catch (error: any) {
       const status = error.status || 400;
-      res.status(status).json({ error: error.message || 'Error al modificar estado de la agenda' });
+      res.status(status).json({
+        error: error.message || 'Error al modificar estado de la agenda',
+        turnosPendientes: error.turnosPendientes,
+      });
     }
   }
 }
