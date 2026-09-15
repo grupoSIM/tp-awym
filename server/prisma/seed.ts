@@ -1,5 +1,12 @@
 import { PrismaClient, Rol, EstadoUsuario } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import {
+  BORATTI_ESPECIALIDADES,
+  BORATTI_CONSULTORIOS,
+  BORATTI_PROFESIONALES,
+  BORATTI_PROF_ESP,
+  BORATTI_AGENDAS,
+} from './seed-boratti-data';
 
 const prisma = new PrismaClient();
 
@@ -258,7 +265,163 @@ async function main() {
     }
   }
 
-  console.log('Seed completado con éxito: 4 usuarios, especialidades, consultorios y agendas creados');
+  // --- Catálogo y datos de Sanatorio Boratti ---
+  // 1. Especialidades (41)
+  for (const esp of BORATTI_ESPECIALIDADES) {
+    const existing = await prisma.especialidad.findUnique({ where: { nombre: esp.nombre } });
+    if (!existing) {
+      await prisma.especialidad.create({
+        data: {
+          nombre: esp.nombre,
+          descripcion: esp.descripcion,
+          activo: true,
+        },
+      });
+    }
+  }
+
+  // 2. Consultorios (20)
+  for (const c of BORATTI_CONSULTORIOS) {
+    const existing = await prisma.consultorio.findUnique({ where: { numero: c.numero } });
+    if (!existing) {
+      await prisma.consultorio.create({
+        data: {
+          numero: c.numero,
+          ubicacion: c.ubicacion,
+          piso: c.piso,
+          activo: true,
+        },
+      });
+    }
+  }
+
+  // 3. Profesionales (49)
+  for (const p of BORATTI_PROFESIONALES) {
+    const dni = (28000000 + p.id).toString();
+    let persona = await prisma.persona.findFirst({
+      where: {
+        OR: [{ dni }, { email: p.email }],
+      },
+      include: {
+        profesional: {
+          include: { especialidades: true },
+        },
+        usuario: true,
+      },
+    });
+
+    if (!persona) {
+      persona = await prisma.persona.create({
+        data: {
+          dni,
+          nombre: p.nombre,
+          apellido: p.apellido,
+          email: p.email,
+          telefono: p.telefono,
+          fecha_nacimiento: new Date('1980-01-01'),
+          usuario: {
+            create: {
+              password_hash: passwordHash,
+              rol: Rol.PROFESIONAL,
+              estado: EstadoUsuario.ACTIVO,
+            },
+          },
+          profesional: {
+            create: {
+              matricula: p.mp,
+              activo: true,
+            },
+          },
+        },
+        include: {
+          profesional: {
+            include: { especialidades: true },
+          },
+          usuario: true,
+        },
+      });
+    } else {
+      if (!persona.usuario) {
+        await prisma.usuario.create({
+          data: {
+            id_persona: persona.id_persona,
+            password_hash: passwordHash,
+            rol: Rol.PROFESIONAL,
+            estado: EstadoUsuario.ACTIVO,
+          },
+        });
+      }
+      if (!persona.profesional) {
+        await prisma.profesional.create({
+          data: {
+            id_persona: persona.id_persona,
+            matricula: p.mp,
+            activo: true,
+          },
+        });
+      }
+    }
+  }
+
+  // 4. Relación Profesional - Especialidad
+  for (const pe of BORATTI_PROF_ESP) {
+    const profData = BORATTI_PROFESIONALES.find((p) => p.id === pe.idProf);
+    const espData = BORATTI_ESPECIALIDADES.find((e) => e.id === pe.idEsp);
+    if (!profData || !espData) continue;
+
+    const prof = await prisma.profesional.findUnique({ where: { matricula: profData.mp } });
+    const esp = await prisma.especialidad.findUnique({ where: { nombre: espData.nombre } });
+    if (!prof || !esp) continue;
+
+    await prisma.profesionalEspecialidad.upsert({
+      where: {
+        id_profesional_id_especialidad: {
+          id_profesional: prof.id_profesional,
+          id_especialidad: esp.id_especialidad,
+        },
+      },
+      update: {},
+      create: {
+        id_profesional: prof.id_profesional,
+        id_especialidad: esp.id_especialidad,
+      },
+    });
+  }
+
+  // 5. Agendas Médicas (98)
+  for (const a of BORATTI_AGENDAS) {
+    const profData = BORATTI_PROFESIONALES.find((p) => p.id === a.idProf);
+    const consData = BORATTI_CONSULTORIOS.find((c) => c.id === a.idCons);
+    if (!profData || !consData) continue;
+
+    const prof = await prisma.profesional.findUnique({ where: { matricula: profData.mp } });
+    const cons = await prisma.consultorio.findUnique({ where: { numero: consData.numero } });
+    if (!prof || !cons) continue;
+
+    const existingAgenda = await prisma.agenda.findFirst({
+      where: {
+        id_profesional: prof.id_profesional,
+        dia_semana: a.diaSemana,
+        hora_inicio: a.horaInicio,
+      },
+    });
+
+    if (!existingAgenda) {
+      await prisma.agenda.create({
+        data: {
+          id_profesional: prof.id_profesional,
+          id_consultorio: cons.id_consultorio,
+          dia_semana: a.diaSemana,
+          hora_inicio: a.horaInicio,
+          hora_fin: a.horaFin,
+          duracion_minutos: a.duracion,
+          activo: true,
+        },
+      });
+    }
+  }
+
+  console.log('Seed completado con éxito: catálogo Boratti (especialidades, consultorios, profesionales y agendas) cargado.');
 }
 
 main()
