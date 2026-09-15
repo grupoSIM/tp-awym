@@ -660,7 +660,7 @@ export class TurnosService {
       throw error;
     }
 
-    const { dateUtc, dayOfWeek } = this.parseDate(fecha);
+    const { dateUtc, diaSemana } = this.parseDate(fecha);
     const targetProfId = id_profesional ? Number(id_profesional) : turno.id_profesional;
 
     const hoy = new Date();
@@ -675,7 +675,7 @@ export class TurnosService {
       const agendas = await tx.agenda.findMany({
         where: {
           id_profesional: targetProfId,
-          dia_semana: dayOfWeek,
+          dia_semana: diaSemana,
           activo: true,
         },
       });
