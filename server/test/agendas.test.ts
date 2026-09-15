@@ -110,7 +110,7 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
     });
     testProfesionalId2 = prof2.id_profesional;
 
-    await authService.createUserWithPersona({
+    const userPac = await authService.createUserWithPersona({
       dni: pacienteDni,
       nombre: 'Paciente',
       apellido: 'Agenda',
@@ -119,6 +119,21 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
       password,
       rol: Rol.PACIENTE,
     });
+
+    await prisma.paciente.create({
+      data: {
+        id_persona: userPac.id_persona,
+        obra_social: 'OSDE Agenda',
+        activo: true,
+      },
+    });
+
+    let esp = await prisma.especialidad.findFirst();
+    if (!esp) {
+      await prisma.especialidad.create({
+        data: { nombre: 'Cardiología Test Agenda', activo: true },
+      });
+    }
 
     // Login para obtener cookies
     const resAdmin = await request(app).post('/api/v1/auth/login').send({ dni: adminDni, password });
@@ -154,6 +169,12 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
     });
     await prisma.profesional.deleteMany({
       where: { persona: { dni: { startsWith: '88888' } } },
+    });
+    await prisma.paciente.deleteMany({
+      where: { persona: { dni: { startsWith: '88888' } } },
+    });
+    await prisma.especialidad.deleteMany({
+      where: { nombre: 'Cardiología Test Agenda' },
     });
     await prisma.usuario.deleteMany({
       where: { persona: { dni: { startsWith: '88888' } } },
@@ -409,8 +430,28 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
       fechaFutura.setDate(fechaFutura.getDate() + 7);
       const fechaIso = fechaFutura.toISOString().split('T')[0];
 
-      const paciente = await prisma.paciente.findFirst();
-      const esp = await prisma.especialidad.findFirst();
+      let paciente = await prisma.paciente.findFirst();
+      if (!paciente) {
+        const userPac = await authService.createUserWithPersona({
+          dni: '88888998',
+          nombre: 'Paciente',
+          apellido: 'AgendaFallback',
+          email: 'pac.fallback@test.com',
+          fecha_nacimiento: new Date('1990-05-05'),
+          password,
+          rol: Rol.PACIENTE,
+        });
+        paciente = await prisma.paciente.create({
+          data: { id_persona: userPac.id_persona, obra_social: 'OSDE', activo: true },
+        });
+      }
+
+      let esp = await prisma.especialidad.findFirst();
+      if (!esp) {
+        esp = await prisma.especialidad.create({
+          data: { nombre: 'Cardiología Test Agenda', activo: true },
+        });
+      }
 
       const turno = await prisma.turno.create({
         data: {
