@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ConsultoriosService } from '../../core/services/consultorios.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Consultorio } from '../../core/models/consultorio.model';
 
 @Component({
@@ -47,12 +49,24 @@ export class ConsultoriosComponent implements OnInit {
     this.cargarConsultorios();
   }
 
+  private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   cargarConsultorios(): void {
@@ -140,15 +154,27 @@ export class ConsultoriosComponent implements OnInit {
 
   toggleEstado(c: Consultorio): void {
     const accion = c.activo ? 'desactivar' : 'activar';
-    if (confirm(`¿Confirma que desea ${accion} el consultorio "${c.numero}"?`)) {
-      this.consultoriosService.toggleEstado(c.id_consultorio, !c.activo).subscribe({
-        next: () => {
-          this.cargarConsultorios();
-        },
-        error: (err) => {
-          alert(err.error?.error || `Error al ${accion} el consultorio`);
-        },
+    const tipo = c.activo ? 'warning' : 'primary';
+
+    this.confirmService
+      .confirm({
+        titulo: `${c.activo ? 'Desactivar' : 'Activar'} Consultorio`,
+        mensaje: `¿Confirma que desea ${accion} el consultorio "${c.numero}"?`,
+        textoConfirmar: c.activo ? 'Desactivar' : 'Activar',
+        tipo,
+      })
+      .then((conf) => {
+        if (!conf) return;
+
+        this.consultoriosService.toggleEstado(c.id_consultorio, !c.activo).subscribe({
+          next: () => {
+            this.toastService.success(`Consultorio ${c.activo ? 'desactivado' : 'activado'} correctamente.`);
+            this.cargarConsultorios();
+          },
+          error: (err) => {
+            this.toastService.error(err.error?.error || `Error al ${accion} el consultorio`);
+          },
+        });
       });
-    }
   }
 }

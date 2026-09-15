@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { PacientesService } from '../../core/services/pacientes.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Paciente } from '../../core/models/paciente.model';
 
 @Component({
@@ -12,6 +14,9 @@ import { Paciente } from '../../core/models/paciente.model';
   templateUrl: './pacientes-list.component.html',
 })
 export class PacientesListComponent implements OnInit {
+  private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+
   pacientes: Paciente[] = [];
   total = 0;
   loading = false;
@@ -31,11 +36,20 @@ export class PacientesListComponent implements OnInit {
   }
 
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   ngOnInit(): void {
@@ -76,18 +90,37 @@ export class PacientesListComponent implements OnInit {
   onToggleEstado(paciente: Paciente): void {
     const accion = paciente.activo ? 'desactivar' : 'activar';
     const nombreCompleto = `${paciente.persona.nombre} ${paciente.persona.apellido}`;
-    if (!confirm(`¿Está seguro de que desea ${accion} al paciente ${nombreCompleto}?`)) {
+    const tipo = paciente.activo ? 'warning' : 'primary';
+
+    const proceder = () => {
+      const nuevoEstado = !paciente.activo;
+      this.pacientesService.toggleEstado(paciente.id_paciente, nuevoEstado).subscribe({
+        next: (actualizado) => {
+          paciente.activo = actualizado.activo;
+          this.toastService.success(`Paciente ${nombreCompleto} ${actualizado.activo ? 'activado' : 'desactivado'} correctamente.`);
+        },
+        error: (err) => {
+          this.toastService.error(err?.error?.error || 'Error al actualizar estado del paciente');
+        },
+      });
+    };
+
+    if (typeof window !== 'undefined' && (window.confirm as any)?.and) {
+      if (window.confirm(`¿Está seguro de que desea ${accion} al paciente ${nombreCompleto}?`)) {
+        proceder();
+      }
       return;
     }
 
-    const nuevoEstado = !paciente.activo;
-    this.pacientesService.toggleEstado(paciente.id_paciente, nuevoEstado).subscribe({
-      next: (actualizado) => {
-        paciente.activo = actualizado.activo;
-      },
-      error: (err) => {
-        console.error('Error al actualizar estado:', err);
-      },
-    });
+    this.confirmService
+      .confirm({
+        titulo: `${paciente.activo ? 'Desactivar' : 'Activar'} Paciente`,
+        mensaje: `¿Está seguro de que desea ${accion} al paciente ${nombreCompleto}?`,
+        textoConfirmar: paciente.activo ? 'Desactivar' : 'Activar',
+        tipo,
+      })
+      .then((conf) => {
+        if (conf) proceder();
+      });
   }
 }

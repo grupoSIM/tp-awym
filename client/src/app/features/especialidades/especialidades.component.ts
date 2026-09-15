@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { EspecialidadesService } from '../../core/services/especialidades.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Especialidad } from '../../core/models/especialidad.model';
 
 @Component({
@@ -46,12 +48,24 @@ export class EspecialidadesComponent implements OnInit {
     this.cargarEspecialidades();
   }
 
+  private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   cargarEspecialidades(): void {
@@ -140,21 +154,31 @@ export class EspecialidadesComponent implements OnInit {
 
   onToggleEstado(esp: Especialidad): void {
     const accion = esp.activo ? 'desactivar' : 'activar';
-    if (!confirm(`¿Está seguro de que desea ${accion} la especialidad "${esp.nombre}"?`)) {
-      return;
-    }
+    const tipo = esp.activo ? 'warning' : 'primary';
 
-    const nuevoEstado = !esp.activo;
-    this.especialidadesService.toggleEstado(esp.id_especialidad, nuevoEstado).subscribe({
-      next: (actualizada) => {
-        esp.activo = actualizada.activo;
-        if (this.estadoFiltro !== 'todos') {
-          this.cargarEspecialidades();
-        }
-      },
-      error: (err) => {
-        console.error('Error al actualizar estado:', err);
-      },
-    });
+    this.confirmService
+      .confirm({
+        titulo: `${esp.activo ? 'Desactivar' : 'Activar'} Especialidad`,
+        mensaje: `¿Está seguro de que desea ${accion} la especialidad "${esp.nombre}"?`,
+        textoConfirmar: esp.activo ? 'Desactivar' : 'Activar',
+        tipo,
+      })
+      .then((conf) => {
+        if (!conf) return;
+
+        const nuevoEstado = !esp.activo;
+        this.especialidadesService.toggleEstado(esp.id_especialidad, nuevoEstado).subscribe({
+          next: (actualizada) => {
+            esp.activo = actualizada.activo;
+            this.toastService.success(`Especialidad "${esp.nombre}" ${actualizada.activo ? 'activada' : 'desactivada'} correctamente.`);
+            if (this.estadoFiltro !== 'todos') {
+              this.cargarEspecialidades();
+            }
+          },
+          error: (err) => {
+            this.toastService.error(err?.error?.error || 'Error al actualizar estado de la especialidad');
+          },
+        });
+      });
   }
 }

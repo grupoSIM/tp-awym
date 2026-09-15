@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { EspecialidadesService } from '../../core/services/especialidades.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { Especialidad } from '../../core/models/especialidad.model';
 
 @Component({
@@ -71,12 +72,23 @@ export class ProfesionalFormComponent implements OnInit {
     this.cargarEspecialidadesYDatos();
   }
 
+  private confirmService = inject(ConfirmService);
+
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   fechaRangoValidator(control: any) {

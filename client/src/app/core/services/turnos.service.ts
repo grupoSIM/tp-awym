@@ -41,7 +41,10 @@ export class TurnosService {
     pacienteId?: number;
     profesionalId?: number;
     fecha?: string;
+    fecha_desde?: string;
+    fecha_hasta?: string;
     estado?: string;
+    tipo?: 'proximos' | 'historial' | 'todos';
     especialidadId?: number;
     consultorioId?: number;
     search?: string;
@@ -50,7 +53,10 @@ export class TurnosService {
     if (params?.pacienteId) httpParams = httpParams.set('pacienteId', params.pacienteId.toString());
     if (params?.profesionalId) httpParams = httpParams.set('profesionalId', params.profesionalId.toString());
     if (params?.fecha) httpParams = httpParams.set('fecha', params.fecha);
+    if (params?.fecha_desde) httpParams = httpParams.set('fecha_desde', params.fecha_desde);
+    if (params?.fecha_hasta) httpParams = httpParams.set('fecha_hasta', params.fecha_hasta);
     if (params?.estado) httpParams = httpParams.set('estado', params.estado);
+    if (params?.tipo) httpParams = httpParams.set('tipo', params.tipo);
     if (params?.especialidadId) httpParams = httpParams.set('especialidadId', params.especialidadId.toString());
     if (params?.consultorioId) httpParams = httpParams.set('consultorioId', params.consultorioId.toString());
     if (params?.search) httpParams = httpParams.set('search', params.search);
@@ -64,5 +70,22 @@ export class TurnosService {
 
   cancelarTurno(id: number, motivo?: string): Observable<Turno> {
     return this.http.patch<Turno>(`${this.apiUrl}/${id}/cancelar`, { motivo }, { withCredentials: true });
+  }
+
+  reprogramarTurno(id: number, data: {
+    fecha: string;
+    hora_inicio: string;
+    hora_fin: string;
+    id_profesional?: number;
+    motivo?: string;
+  }): Observable<Turno> {
+    return this.http.patch<Turno>(`${this.apiUrl}/${id}/reprogramar`, data, { withCredentials: true });
+  }
+
+  actualizarEstado(id: number, data: {
+    estado: 'CONFIRMADO' | 'CANCELADO' | 'ATENDIDO' | 'AUSENTE';
+    observacion?: string;
+  }): Observable<Turno> {
+    return this.http.patch<Turno>(`${this.apiUrl}/${id}/estado`, data, { withCredentials: true });
   }
 }

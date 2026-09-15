@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { EspecialidadesService } from '../../core/services/especialidades.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Profesional } from '../../core/models/profesional.model';
 import { Especialidad } from '../../core/models/especialidad.model';
 
@@ -44,12 +46,24 @@ export class ProfesionalesListComponent implements OnInit {
     this.cargarProfesionales();
   }
 
+  private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   cargarEspecialidades(): void {
@@ -103,21 +117,31 @@ export class ProfesionalesListComponent implements OnInit {
   onToggleEstado(prof: Profesional): void {
     const accion = prof.activo ? 'desactivar' : 'activar';
     const nombreCompleto = `${prof.persona.nombre} ${prof.persona.apellido}`;
-    if (!confirm(`¿Está seguro de que desea ${accion} al profesional ${nombreCompleto}?`)) {
-      return;
-    }
+    const tipo = prof.activo ? 'warning' : 'primary';
 
-    const nuevoEstado = !prof.activo;
-    this.profesionalesService.toggleEstado(prof.id_profesional, nuevoEstado).subscribe({
-      next: (actualizado) => {
-        prof.activo = actualizado.activo;
-        if (this.estadoFiltro !== 'todos') {
-          this.cargarProfesionales();
-        }
-      },
-      error: (err) => {
-        console.error('Error al actualizar estado:', err);
-      },
-    });
+    this.confirmService
+      .confirm({
+        titulo: `${prof.activo ? 'Desactivar' : 'Activar'} Profesional`,
+        mensaje: `¿Está seguro de que desea ${accion} al profesional ${nombreCompleto}?`,
+        textoConfirmar: prof.activo ? 'Desactivar' : 'Activar',
+        tipo,
+      })
+      .then((conf) => {
+        if (!conf) return;
+
+        const nuevoEstado = !prof.activo;
+        this.profesionalesService.toggleEstado(prof.id_profesional, nuevoEstado).subscribe({
+          next: (actualizado) => {
+            prof.activo = actualizado.activo;
+            this.toastService.success(`Profesional ${nombreCompleto} ${actualizado.activo ? 'activado' : 'desactivado'} correctamente.`);
+            if (this.estadoFiltro !== 'todos') {
+              this.cargarProfesionales();
+            }
+          },
+          error: (err) => {
+            this.toastService.error(err?.error?.error || 'Error al actualizar estado del profesional');
+          },
+        });
+      });
   }
 }

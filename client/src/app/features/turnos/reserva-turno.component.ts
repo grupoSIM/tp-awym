@@ -7,6 +7,7 @@ import { EspecialidadesService } from '../../core/services/especialidades.servic
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { PacientesService } from '../../core/services/pacientes.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { Especialidad } from '../../core/models/especialidad.model';
 import { Profesional } from '../../core/models/profesional.model';
 import { Paciente } from '../../core/models/paciente.model';
@@ -291,6 +292,7 @@ export class ReservaTurnoComponent implements OnInit {
   private pacientesService = inject(PacientesService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private confirmService = inject(ConfirmService);
 
   filtroForm!: FormGroup;
   especialidades: Especialidad[] = [];
@@ -306,11 +308,16 @@ export class ReservaTurnoComponent implements OnInit {
   busquedaRealizada = false;
   errorMessage = '';
   successMessage = '';
+  profesionalesFiltrados: Profesional[] = [];
 
   minFecha = '';
 
   get user() {
     return this.authService.currentUser();
+  }
+
+  get isPaciente(): boolean {
+    return this.user?.rol === 'PACIENTE';
   }
 
   get isPersonalSalud(): boolean {
@@ -319,11 +326,20 @@ export class ReservaTurnoComponent implements OnInit {
   }
 
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   ngOnInit(): void {

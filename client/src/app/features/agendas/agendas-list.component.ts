@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -6,6 +6,8 @@ import { AgendasService } from '../../core/services/agendas.service';
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { ConsultoriosService } from '../../core/services/consultorios.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Agenda } from '../../core/models/agenda.model';
 import { Profesional } from '../../core/models/profesional.model';
 import { Consultorio } from '../../core/models/consultorio.model';
@@ -17,6 +19,9 @@ import { Consultorio } from '../../core/models/consultorio.model';
   templateUrl: './agendas-list.component.html',
 })
 export class AgendasListComponent implements OnInit {
+  private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+
   agendas: Agenda[] = [];
   profesionales: Profesional[] = [];
   consultorios: Consultorio[] = [];
@@ -60,11 +65,20 @@ export class AgendasListComponent implements OnInit {
   }
 
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   cargarCombos(): void {
@@ -114,35 +128,53 @@ export class AgendasListComponent implements OnInit {
 
   toggleEstado(a: Agenda): void {
     const accion = a.activo ? 'desactivar' : 'activar';
+    const tipoAccion = a.activo ? 'warning' : 'primary';
     const profNombre = a.profesional?.persona
       ? `${a.profesional.persona.apellido}, ${a.profesional.persona.nombre}`
       : 'el profesional';
 
-    if (confirm(`¿Confirma que desea ${accion} la agenda de ${profNombre} los ${this.getNombreDia(a.dia_semana)} (${a.hora_inicio} - ${a.hora_fin})?`)) {
-      this.agendasService.toggleEstado(a.id_agenda, !a.activo).subscribe({
-        next: () => {
-          this.cargarAgendas();
-        },
-        error: (err) => {
-          if (err.status === 409 && err.error?.turnosPendientes) {
-            const confirmarCancelacion = confirm(
-              `Atención: La agenda cuenta con ${err.error.turnosPendientes} turno(s) confirmado(s) pendiente(s).\n\n¿Desea confirmar la cancelación en lote de dichos turnos y proceder con la desactivación de la agenda?`
-            );
-            if (confirmarCancelacion) {
-              this.agendasService.toggleEstado(a.id_agenda, false, true).subscribe({
-                next: () => {
-                  this.cargarAgendas();
-                },
-                error: (err2) => {
-                  alert(err2.error?.error || 'Error al desactivar la agenda y cancelar los turnos.');
-                },
-              });
+    this.confirmService
+      .confirm({
+        titulo: `${a.activo ? 'Desactivar' : 'Activar'} Agenda Médica`,
+        mensaje: `¿Confirma que desea ${accion} la agenda de ${profNombre} los ${this.getNombreDia(a.dia_semana)} (${a.hora_inicio} - ${a.hora_fin})?`,
+        textoConfirmar: a.activo ? 'Desactivar' : 'Activar',
+        tipo: tipoAccion,
+      })
+      .then((conf) => {
+        if (!conf) return;
+
+        this.agendasService.toggleEstado(a.id_agenda, !a.activo).subscribe({
+          next: () => {
+            this.toastService.success(`Agenda ${a.activo ? 'desactivada' : 'activada'} correctamente.`);
+            this.cargarAgendas();
+          },
+          error: (err) => {
+            if (err.status === 409 && err.error?.turnosPendientes) {
+              this.confirmService
+                .confirm({
+                  titulo: 'Confirmar Cancelación en Lote',
+                  mensaje: `Atención: La agenda cuenta con ${err.error.turnosPendientes} turno(s) confirmado(s) pendiente(s).\n\n¿Desea confirmar la cancelación en lote de dichos turnos y proceder con la desactivación de la agenda?`,
+                  textoConfirmar: 'Cancelar Turnos y Desactivar',
+                  tipo: 'danger',
+                })
+                .then((confirmarCancelacion) => {
+                  if (confirmarCancelacion) {
+                    this.agendasService.toggleEstado(a.id_agenda, false, true).subscribe({
+                      next: () => {
+                        this.toastService.success('Agenda desactivada y turnos cancelados exitosamente.');
+                        this.cargarAgendas();
+                      },
+                      error: (err2) => {
+                        this.toastService.error(err2.error?.error || 'Error al desactivar la agenda y cancelar los turnos.');
+                      },
+                    });
+                  }
+                });
+            } else {
+              this.toastService.error(err.error?.error || `Error al ${accion} la agenda`);
             }
-          } else {
-            alert(err.error?.error || `Error al ${accion} la agenda`);
-          }
-        },
+          },
+        });
       });
-    }
   }
 }

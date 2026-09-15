@@ -344,7 +344,10 @@ export class TurnosService {
       pacienteId?: number;
       profesionalId?: number;
       fecha?: string;
+      fecha_desde?: string;
+      fecha_hasta?: string;
       estado?: EstadoTurno;
+      tipo?: 'proximos' | 'historial' | 'todos';
       especialidadId?: number;
       consultorioId?: number;
       search?: string;
@@ -354,6 +357,7 @@ export class TurnosService {
     const where: any = {
       activo: true,
     };
+    const andConditions: any[] = [];
 
     if (user.rol === Rol.PACIENTE) {
       const paciente = await prisma.paciente.findUnique({
@@ -387,9 +391,42 @@ export class TurnosService {
     if (params.fecha) {
       const { dateUtc } = this.parseDate(params.fecha);
       where.fecha = dateUtc;
+    } else if (params.fecha_desde || params.fecha_hasta) {
+      where.fecha = where.fecha || {};
+      if (params.fecha_desde) {
+        const { dateUtc } = this.parseDate(params.fecha_desde);
+        where.fecha.gte = dateUtc;
+      }
+      if (params.fecha_hasta) {
+        const { dateUtc } = this.parseDate(params.fecha_hasta);
+        where.fecha.lte = dateUtc;
+      }
     }
 
-    if (params.estado) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    if (params.tipo === 'proximos') {
+      if (!where.fecha) {
+        where.fecha = { gte: hoy };
+      }
+      if (!params.estado) {
+        where.estado = EstadoTurno.CONFIRMADO;
+      } else {
+        where.estado = params.estado;
+      }
+    } else if (params.tipo === 'historial') {
+      if (!params.estado) {
+        andConditions.push({
+          OR: [
+            { fecha: { lt: hoy } },
+            { estado: { in: [EstadoTurno.CANCELADO, EstadoTurno.ATENDIDO, EstadoTurno.AUSENTE] } },
+          ],
+        });
+      } else {
+        where.estado = params.estado;
+      }
+    } else if (params.estado) {
       where.estado = params.estado;
     }
 
@@ -403,17 +440,27 @@ export class TurnosService {
 
     if (params.search) {
       const search = params.search.trim();
-      where.OR = [
-        { motivo_consulta: { contains: search } },
-        { paciente: { persona: { nombre: { contains: search } } } },
-        { paciente: { persona: { apellido: { contains: search } } } },
-        { paciente: { persona: { dni: { contains: search } } } },
-        { profesional: { persona: { nombre: { contains: search } } } },
-        { profesional: { persona: { apellido: { contains: search } } } },
-        { profesional: { matricula: { contains: search } } },
-        { especialidad: { nombre: { contains: search } } },
-      ];
+      andConditions.push({
+        OR: [
+          { motivo_consulta: { contains: search } },
+          { paciente: { persona: { nombre: { contains: search } } } },
+          { paciente: { persona: { apellido: { contains: search } } } },
+          { paciente: { persona: { dni: { contains: search } } } },
+          { profesional: { persona: { nombre: { contains: search } } } },
+          { profesional: { persona: { apellido: { contains: search } } } },
+          { profesional: { matricula: { contains: search } } },
+          { especialidad: { nombre: { contains: search } } },
+        ],
+      });
     }
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    const orderBy = params.tipo === 'historial'
+      ? [{ fecha: 'desc' as const }, { hora_inicio: 'desc' as const }]
+      : [{ fecha: 'asc' as const }, { hora_inicio: 'asc' as const }];
 
     return prisma.turno.findMany({
       where,
@@ -423,7 +470,7 @@ export class TurnosService {
         especialidad: true,
         consultorio: true,
       },
-      orderBy: [{ fecha: 'asc' }, { hora_inicio: 'asc' }],
+      orderBy,
     });
   }
 
@@ -487,6 +534,16 @@ export class TurnosService {
         error.status = 403;
         throw error;
       }
+
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaTurno = new Date(turno.fecha);
+      fechaTurno.setHours(0, 0, 0, 0);
+      if (fechaTurno < hoy) {
+        const error: any = new Error('No se pueden cancelar turnos de fechas pasadas');
+        error.status = 400;
+        throw error;
+      }
     } else if (user.rol === Rol.PROFESIONAL) {
       const profesional = await prisma.profesional.findUnique({
         where: { id_persona: user.personaId },
@@ -504,15 +561,301 @@ export class TurnosService {
       throw error;
     }
 
-    const motivoStr = motivo ? motivo.trim() : 'Cancelado por el usuario';
-    const nuevoMotivo = turno.motivo_consulta
-      ? `${turno.motivo_consulta} | Cancelación: ${motivoStr}`.slice(0, 255)
-      : `Cancelación: ${motivoStr}`.slice(0, 255);
+    if (turno.estado === EstadoTurno.ATENDIDO || turno.estado === EstadoTurno.AUSENTE) {
+      const error: any = new Error(`No se puede cancelar un turno en estado ${turno.estado}`);
+      error.status = 400;
+      throw error;
+    }
+
+    let actorLabel = 'el usuario';
+    if (user.rol === Rol.PACIENTE) {
+      actorLabel = 'el paciente';
+    } else if (user.rol === Rol.RECEPCIONISTA) {
+      const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+      actorLabel = nombreCompleto ? `recepción (${nombreCompleto})` : 'recepción';
+    } else if (user.rol === Rol.ADMIN) {
+      const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+      actorLabel = nombreCompleto ? `administración (${nombreCompleto})` : 'administración';
+    } else if (user.rol === Rol.PROFESIONAL) {
+      const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+      actorLabel = nombreCompleto ? `el profesional (${nombreCompleto})` : 'el profesional';
+    }
+
+    let baseMotivo = '';
+    if (turno.motivo_consulta) {
+      const parts = turno.motivo_consulta.split(' | Cancelación:');
+      if (!parts[0].startsWith('Cancelación:')) {
+        baseMotivo = parts[0].trim();
+      }
+    }
+
+    const detalleMotivo = motivo && motivo.trim() ? `: ${motivo.trim()}` : '';
+    const auditCancel = `Cancelado por ${actorLabel}${detalleMotivo}`;
+    const nuevoMotivo = baseMotivo
+      ? `${baseMotivo} | Cancelación: ${auditCancel}`.slice(0, 255)
+      : `Cancelación: ${auditCancel}`.slice(0, 255);
 
     return prisma.turno.update({
       where: { id_turno: id },
       data: {
         estado: EstadoTurno.CANCELADO,
+        motivo_consulta: nuevoMotivo,
+      },
+      include: {
+        paciente: { include: { persona: true } },
+        profesional: { include: { persona: true } },
+        especialidad: true,
+        consultorio: true,
+      },
+    });
+  }
+
+  async reprogramarTurno(
+    id: number,
+    data: {
+      fecha: string;
+      hora_inicio: string;
+      hora_fin: string;
+      id_profesional?: number;
+      motivo?: string;
+    },
+    user: UserSessionPayload
+  ) {
+    const turno = await prisma.turno.findUnique({
+      where: { id_turno: id },
+      include: { profesional: true, paciente: true },
+    });
+
+    if (!turno) {
+      const error: any = new Error('Turno no encontrado');
+      error.status = 404;
+      throw error;
+    }
+
+    if (user.rol === Rol.PACIENTE) {
+      const paciente = await prisma.paciente.findUnique({
+        where: { id_persona: user.personaId },
+      });
+      if (!paciente || turno.id_paciente !== paciente.id_paciente) {
+        const error: any = new Error('No posee permisos para reprogramar este turno');
+        error.status = 403;
+        throw error;
+      }
+    } else if (user.rol === Rol.PROFESIONAL) {
+      const error: any = new Error('El rol profesional no tiene permitido reprogramar turnos');
+      error.status = 403;
+      throw error;
+    }
+
+    if (turno.estado !== EstadoTurno.CONFIRMADO) {
+      const error: any = new Error(`Solo se pueden reprogramar turnos en estado CONFIRMADO. Estado actual: ${turno.estado}`);
+      error.status = 400;
+      throw error;
+    }
+
+    const { fecha, hora_inicio, hora_fin, id_profesional, motivo } = data;
+    if (!fecha || !hora_inicio || !hora_fin) {
+      const error: any = new Error('Fecha, hora_inicio y hora_fin son requeridos');
+      error.status = 400;
+      throw error;
+    }
+
+    const { dateUtc, dayOfWeek } = this.parseDate(fecha);
+    const targetProfId = id_profesional ? Number(id_profesional) : turno.id_profesional;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (dateUtc < hoy) {
+      const error: any = new Error('No se pueden reprogramar turnos para fechas pasadas');
+      error.status = 400;
+      throw error;
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const agendas = await tx.agenda.findMany({
+        where: {
+          id_profesional: targetProfId,
+          dia_semana: dayOfWeek,
+          activo: true,
+        },
+      });
+
+      const agendaCoincidente = agendas.find(
+        (a) => a.hora_inicio <= hora_inicio && a.hora_fin >= hora_fin
+      );
+
+      if (!agendaCoincidente) {
+        const error: any = new Error('No existe agenda configurada para el profesional en la fecha y franja horaria solicitada');
+        error.status = 400;
+        throw error;
+      }
+
+      const solapamientoProfesional = await tx.turno.findFirst({
+        where: {
+          id_turno: { not: id },
+          id_profesional: targetProfId,
+          fecha: dateUtc,
+          estado: EstadoTurno.CONFIRMADO,
+          activo: true,
+          OR: [
+            {
+              hora_inicio: { lte: hora_inicio },
+              hora_fin: { gt: hora_inicio },
+            },
+            {
+              hora_inicio: { lt: hora_fin },
+              hora_fin: { gte: hora_fin },
+            },
+            {
+              hora_inicio: { gte: hora_inicio },
+              hora_fin: { lte: hora_fin },
+            },
+          ],
+        },
+      });
+
+      if (solapamientoProfesional) {
+        const error: any = new Error('El profesional ya posee un turno confirmado en esa franja horaria');
+        error.status = 409;
+        throw error;
+      }
+
+      const solapamientoPaciente = await tx.turno.findFirst({
+        where: {
+          id_turno: { not: id },
+          id_paciente: turno.id_paciente,
+          fecha: dateUtc,
+          estado: EstadoTurno.CONFIRMADO,
+          activo: true,
+          OR: [
+            {
+              hora_inicio: { lte: hora_inicio },
+              hora_fin: { gt: hora_inicio },
+            },
+            {
+              hora_inicio: { lt: hora_fin },
+              hora_fin: { gte: hora_fin },
+            },
+            {
+              hora_inicio: { gte: hora_inicio },
+              hora_fin: { lte: hora_fin },
+            },
+          ],
+        },
+      });
+
+      if (solapamientoPaciente) {
+        const error: any = new Error('El paciente ya posee un turno confirmado en esa franja horaria');
+        error.status = 409;
+        throw error;
+      }
+
+      let actorLabel = 'el usuario';
+      if (user.rol === Rol.PACIENTE) {
+        actorLabel = 'el paciente';
+      } else if (user.rol === Rol.RECEPCIONISTA) {
+        const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+        actorLabel = nombreCompleto ? `recepción (${nombreCompleto})` : 'recepción';
+      } else if (user.rol === Rol.ADMIN) {
+        const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+        actorLabel = nombreCompleto ? `administración (${nombreCompleto})` : 'administración';
+      }
+
+      let baseMotivo = '';
+      if (turno.motivo_consulta) {
+        const parts = turno.motivo_consulta.split(' | Reprogramación:');
+        if (!parts[0].startsWith('Reprogramación:')) {
+          baseMotivo = parts[0].trim();
+        }
+      }
+
+      const detalleMotivo = motivo && motivo.trim() ? `: ${motivo.trim()}` : '';
+      const auditReprog = `Reprogramado por ${actorLabel}${detalleMotivo}`;
+      const nuevoMotivo = baseMotivo
+        ? `${baseMotivo} | Reprogramación: ${auditReprog}`.slice(0, 255)
+        : `Reprogramación: ${auditReprog}`.slice(0, 255);
+
+      return tx.turno.update({
+        where: { id_turno: id },
+        data: {
+          fecha: dateUtc,
+          hora_inicio,
+          hora_fin,
+          id_profesional: targetProfId,
+          id_agenda: agendaCoincidente.id_agenda,
+          id_consultorio: agendaCoincidente.id_consultorio,
+          motivo_consulta: nuevoMotivo,
+        },
+        include: {
+          paciente: { include: { persona: true } },
+          profesional: { include: { persona: true } },
+          especialidad: true,
+          consultorio: true,
+        },
+      });
+    });
+  }
+
+  async actualizarEstado(
+    id: number,
+    data: {
+      estado: EstadoTurno;
+      observacion?: string;
+    },
+    user: UserSessionPayload
+  ) {
+    const turno = await prisma.turno.findUnique({
+      where: { id_turno: id },
+    });
+
+    if (!turno) {
+      const error: any = new Error('Turno no encontrado');
+      error.status = 404;
+      throw error;
+    }
+
+    if (user.rol === Rol.PACIENTE) {
+      const error: any = new Error('Los pacientes no poseen permisos para cambiar el estado operativo de los turnos');
+      error.status = 403;
+      throw error;
+    }
+
+    if (user.rol === Rol.PROFESIONAL) {
+      const profesional = await prisma.profesional.findUnique({
+        where: { id_persona: user.personaId },
+      });
+      if (!profesional || turno.id_profesional !== profesional.id_profesional) {
+        const error: any = new Error('No posee permisos para modificar turnos de otro profesional');
+        error.status = 403;
+        throw error;
+      }
+    }
+
+    const { estado, observacion } = data;
+    if (!estado || ![EstadoTurno.ATENDIDO, EstadoTurno.AUSENTE, EstadoTurno.CANCELADO, EstadoTurno.CONFIRMADO].includes(estado)) {
+      const error: any = new Error('Estado inválido');
+      error.status = 400;
+      throw error;
+    }
+
+    if (turno.estado === EstadoTurno.CANCELADO || turno.estado === EstadoTurno.ATENDIDO || turno.estado === EstadoTurno.AUSENTE) {
+      const error: any = new Error(`El turno ya se encuentra en estado terminal: ${turno.estado}`);
+      error.status = 400;
+      throw error;
+    }
+
+    const observacionStr = observacion ? observacion.trim() : '';
+    let nuevoMotivo = turno.motivo_consulta;
+    if (observacionStr) {
+      nuevoMotivo = turno.motivo_consulta
+        ? `${turno.motivo_consulta} | Estado (${estado}): ${observacionStr}`.slice(0, 255)
+        : `Estado (${estado}): ${observacionStr}`.slice(0, 255);
+    }
+
+    return prisma.turno.update({
+      where: { id_turno: id },
+      data: {
+        estado,
         motivo_consulta: nuevoMotivo,
       },
       include: {

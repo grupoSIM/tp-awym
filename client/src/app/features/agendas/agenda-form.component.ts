@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -6,6 +6,7 @@ import { AgendasService } from '../../core/services/agendas.service';
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { ConsultoriosService } from '../../core/services/consultorios.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { Profesional } from '../../core/models/profesional.model';
 import { Consultorio } from '../../core/models/consultorio.model';
 
@@ -76,12 +77,23 @@ export class AgendaFormComponent implements OnInit {
     }
   }
 
+  private confirmService = inject(ConfirmService);
+
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   cargarCombos(): void {

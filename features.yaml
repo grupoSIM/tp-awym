@@ -40,7 +40,7 @@ features:
 
   - id: feat-006
     name: Cancelación, reprogramación e historial de turnos
-    status: proposed
+    status: done
     priority: must
     depends_on:
       - feat-005

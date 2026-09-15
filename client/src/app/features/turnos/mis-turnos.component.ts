@@ -1,10 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TurnosService } from '../../core/services/turnos.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Turno } from '../../core/models/turno.model';
+import { ConfirmService } from '../../core/services/confirm.service';
+import { Turno, FranjaDisponibilidad } from '../../core/models/turno.model';
 
 @Component({
   selector: 'app-mis-turnos',
@@ -57,9 +58,104 @@ import { Turno } from '../../core/models/turno.model';
         }
       </div>
 
-      <!-- Panel de Filtros por cada uno de sus campos -->
-      <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-3 p-md-4">
+      <!-- Selector de Secciones / Pestañas de Turnos -->
+      <div class="mb-4">
+        <ul class="nav nav-pills nav-fill bg-light p-1 rounded-4 shadow-sm" role="tablist" aria-label="Secciones de turnos médicos">
+          <li class="nav-item" role="presentation">
+            <button
+              type="button"
+              class="nav-link rounded-4 fw-semibold py-2"
+              [class.active]="tabActivo === 'proximos'"
+              (click)="setTab('proximos')"
+              role="tab"
+              [attr.aria-selected]="tabActivo === 'proximos'"
+              id="tab-proximos"
+            >
+              📅 Próximos Turnos ({{ countProximos }})
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              type="button"
+              class="nav-link rounded-4 fw-semibold py-2"
+              [class.active]="tabActivo === 'historial'"
+              (click)="setTab('historial')"
+              role="tab"
+              [attr.aria-selected]="tabActivo === 'historial'"
+              id="tab-historial"
+            >
+              📋 Historial de Turnos ({{ countHistorial }})
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              type="button"
+              class="nav-link rounded-4 fw-semibold py-2"
+              [class.active]="tabActivo === 'todos'"
+              (click)="setTab('todos')"
+              role="tab"
+              [attr.aria-selected]="tabActivo === 'todos'"
+              id="tab-todos"
+            >
+              🔍 Todos ({{ turnos.length }})
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Explicación contextual de la pestaña activa -->
+      <div class="px-2 mb-3 text-muted small d-flex align-items-center gap-2">
+        @if (tabActivo === 'proximos') {
+          <span>📌 <strong>Próximos Turnos:</strong> Muestra únicamente turnos confirmados vigentes a partir del día de hoy.</span>
+        } @else if (tabActivo === 'historial') {
+          <span>📜 <strong>Historial de Turnos:</strong> Muestra turnos de fechas pasadas, cancelados, atendidos o ausentes.</span>
+        } @else {
+          <span>🌐 <strong>Todos los Turnos:</strong> Muestra el listado completo sin filtro temporal ni de estado.</span>
+        }
+      </div>
+
+      <!-- Panel de Filtros Colapsable -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div
+          class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center"
+          (click)="toggleFiltros()"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="toggleFiltros()"
+          (keydown.space)="toggleFiltros(); $event.preventDefault()"
+          [attr.aria-expanded]="filtrosAbiertos"
+          aria-controls="panelFiltrosAvanzados"
+          style="cursor: pointer;"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-semibold text-dark d-flex align-items-center gap-2">
+              <span aria-hidden="true">🔍</span>
+              <span>Filtros y Búsqueda</span>
+            </span>
+            @if (hayFiltrosActivos) {
+              <span class="badge bg-primary text-white rounded-pill small px-2">
+                Filtros activos
+              </span>
+            }
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            @if (hayFiltrosActivos) {
+              <button
+                type="button"
+                class="btn btn-link btn-sm text-decoration-none text-muted p-0 me-2"
+                (click)="$event.stopPropagation(); limpiarTodosLosFiltros()"
+              >
+                Limpiar
+              </button>
+            }
+            <span class="small text-primary fw-semibold">
+              {{ filtrosAbiertos ? 'Ocultar filtros ▲' : 'Mostrar filtros ▼' }}
+            </span>
+          </div>
+        </div>
+
+        @if (filtrosAbiertos) {
+          <div id="panelFiltrosAvanzados" class="card-body p-3 p-md-4 pt-0 border-top">
           <!-- Fila superior: Búsqueda rápida y atajos de fecha -->
           <div class="row g-3 align-items-center mb-3">
             <div class="col-12 col-md-6">
@@ -229,19 +325,56 @@ import { Turno } from '../../core/models/turno.model';
             </div>
           </div>
         </div>
+      }
       </div>
 
-      @if (errorMessage) {
-        <div class="alert alert-danger" role="alert" aria-live="polite">
-          {{ errorMessage }}
-        </div>
-      }
+      <!-- Notificaciones Toast Flotantes -->
+      <div
+        class="toast-container position-fixed top-0 end-0 p-3"
+        style="z-index: 1095;"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        @if (successMessage) {
+          <div
+            class="toast show align-items-center bg-success text-white border-0 shadow-lg rounded-3 mb-2"
+            role="status"
+          >
+            <div class="d-flex align-items-center">
+              <div class="toast-body d-flex align-items-center gap-2 py-3 px-3">
+                <span class="fs-5 fw-bold" aria-hidden="true">✓</span>
+                <span class="fw-medium">{{ successMessage }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-close btn-close-white me-3 m-auto"
+                aria-label="Cerrar notificación"
+                (click)="cerrarToast()"
+              ></button>
+            </div>
+          </div>
+        }
 
-      @if (successMessage) {
-        <div class="alert alert-success" role="alert" aria-live="polite">
-          {{ successMessage }}
-        </div>
-      }
+        @if (errorMessage) {
+          <div
+            class="toast show align-items-center bg-danger text-white border-0 shadow-lg rounded-3 mb-2"
+            role="alert"
+          >
+            <div class="d-flex align-items-center">
+              <div class="toast-body d-flex align-items-center gap-2 py-3 px-3">
+                <span class="fs-5 fw-bold" aria-hidden="true">⚠</span>
+                <span class="fw-medium">{{ errorMessage }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-close btn-close-white me-3 m-auto"
+                aria-label="Cerrar notificación de error"
+                (click)="cerrarToast()"
+              ></button>
+            </div>
+          </div>
+        }
+      </div>
 
       @if (loading) {
         <div class="text-center py-5" aria-live="polite">
@@ -271,14 +404,41 @@ import { Turno } from '../../core/models/turno.model';
       @if (!loading && turnos.length > 0 && turnosFiltrados.length === 0) {
         <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
           <div class="py-4">
-            <span class="fs-1 text-muted d-block mb-3" aria-hidden="true">🔍</span>
-            <h2 class="h5 fw-bold text-dark mb-2">No se encontraron turnos con los filtros actuales</h2>
-            <p class="text-muted small mb-4">
-              Intente modificando o restableciendo los criterios de búsqueda para visualizar turnos registrados.
-            </p>
-            <button type="button" class="btn btn-outline-primary px-4" (click)="limpiarTodosLosFiltros()">
-              Limpiar Filtros
-            </button>
+            @if (hayFiltrosActivos) {
+              <span class="fs-1 text-muted d-block mb-3" aria-hidden="true">🔍</span>
+              <h2 class="h5 fw-bold text-dark mb-2">No se encontraron turnos con los filtros ingresados</h2>
+              <p class="text-muted small mb-4">
+                No hay coincidencias en <strong>{{ tabNombreActivo }}</strong> con los criterios de búsqueda aplicados.
+              </p>
+              <button type="button" class="btn btn-outline-primary px-4" (click)="limpiarTodosLosFiltros()">
+                Limpiar Filtros
+              </button>
+            } @else if (tabActivo === 'historial') {
+              <span class="fs-1 text-muted d-block mb-3" aria-hidden="true">📜</span>
+              <h2 class="h5 fw-bold text-dark mb-2">No hay turnos registrados en el Historial</h2>
+              <p class="text-muted small mb-4">
+                Esta sección reúne automáticamente turnos de fechas pasadas, cancelados, atendidos o ausentes. Actualmente no posee turnos cerrados en su registro.
+              </p>
+              @if (countProximos > 0) {
+                <button type="button" class="btn btn-primary px-4" (click)="setTab('proximos')">
+                  Ver Próximos Turnos ({{ countProximos }})
+                </button>
+              }
+            } @else if (tabActivo === 'proximos') {
+              <span class="fs-1 text-muted d-block mb-3" aria-hidden="true">📅</span>
+              <h2 class="h5 fw-bold text-dark mb-2">No posee próximos turnos programados</h2>
+              <p class="text-muted small mb-4">
+                No hay turnos confirmados a partir de la fecha actual.
+              </p>
+              @if (canSolicitarTurno) {
+                <a routerLink="/turnos/reservar" class="btn btn-primary px-4">
+                  Solicitar un Turno Ahora
+                </a>
+              }
+            } @else {
+              <span class="fs-1 text-muted d-block mb-3" aria-hidden="true">🔍</span>
+              <h2 class="h5 fw-bold text-dark mb-2">No se encontraron turnos</h2>
+            }
           </div>
         </div>
       }
@@ -287,7 +447,7 @@ import { Turno } from '../../core/models/turno.model';
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
           <div class="d-flex flex-wrap justify-content-between align-items-center px-4 py-3 bg-light border-bottom gap-2">
             <span class="small text-muted fw-semibold">
-              Mostrando <strong class="text-dark">{{ turnosFiltrados.length }}</strong> de {{ turnos.length }} turnos
+              Mostrando <strong class="text-dark">{{ turnosFiltrados.length }}</strong> de {{ turnos.length }} turnos en <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">{{ tabNombreActivo }}</span>
             </span>
             @if (hayFiltrosActivos) {
               <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary" (click)="limpiarTodosLosFiltros()">
@@ -349,18 +509,52 @@ import { Turno } from '../../core/models/turno.model';
                       {{ turno.motivo_consulta || 'Sin especificar' }}
                     </td>
                     <td class="py-3 text-end px-4">
-                      @if (turno.estado === 'CONFIRMADO') {
-                        <button
-                          type="button"
-                          class="btn btn-outline-danger btn-sm"
-                          (click)="cancelarTurno(turno)"
-                          [attr.aria-label]="'Cancelar turno del ' + formatFecha(turno.fecha) + ' ' + turno.hora_inicio"
-                        >
-                          Cancelar
-                        </button>
-                      } @else {
-                        <span class="text-muted small">-</span>
-                      }
+                      <div class="d-flex flex-wrap justify-content-end gap-1">
+                        @if (turno.estado === 'CONFIRMADO') {
+                          @if (canReprogramar(turno)) {
+                            <button
+                              type="button"
+                              class="btn btn-outline-primary btn-sm"
+                              (click)="abrirModalReprogramar(turno)"
+                              [attr.aria-label]="'Reprogramar turno del ' + formatFecha(turno.fecha) + ' ' + turno.hora_inicio"
+                            >
+                              Reprogramar
+                            </button>
+                          }
+
+                          @if (canCancelar(turno)) {
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger btn-sm"
+                              (click)="abrirModalCancelar(turno)"
+                              [attr.aria-label]="'Cancelar turno del ' + formatFecha(turno.fecha) + ' ' + turno.hora_inicio"
+                            >
+                              Cancelar
+                            </button>
+                          }
+
+                          @if (canCambiarEstadoOperativo) {
+                            <button
+                              type="button"
+                              class="btn btn-outline-success btn-sm"
+                              (click)="cambiarEstado(turno, 'ATENDIDO')"
+                              [attr.aria-label]="'Marcar como atendido el turno del ' + formatFecha(turno.fecha)"
+                            >
+                              Atendido
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-outline-secondary btn-sm"
+                              (click)="cambiarEstado(turno, 'AUSENTE')"
+                              [attr.aria-label]="'Marcar como ausente el turno del ' + formatFecha(turno.fecha)"
+                            >
+                              Ausente
+                            </button>
+                          }
+                        } @else {
+                          <span class="text-muted small">-</span>
+                        }
+                      </div>
                     </td>
                   </tr>
                 }
@@ -369,18 +563,282 @@ import { Turno } from '../../core/models/turno.model';
           </div>
         </div>
       }
+
+      <!-- Modal Accesible de Cancelación -->
+      @if (turnoACancelar) {
+        <div
+          class="modal fade show d-block"
+          style="background-color: rgba(0,0,0,0.5);"
+          tabindex="-1"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalCancelarTitulo"
+          (click)="cerrarModalCancelar()"
+        >
+          <div class="modal-dialog modal-dialog-centered" role="document" (click)="$event.stopPropagation()">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+              <div class="modal-header border-0 pb-0">
+                <h2 class="modal-title h5 fw-bold text-danger" id="modalCancelarTitulo">
+                  Cancelar Turno Médico
+                </h2>
+                <button
+                  type="button"
+                  class="btn-close"
+                  (click)="cerrarModalCancelar()"
+                  aria-label="Cerrar diálogo de cancelación"
+                ></button>
+              </div>
+              <div class="modal-body py-3">
+                <p class="text-muted small mb-3">
+                  ¿Está seguro de que desea cancelar este turno médico? La franja horaria quedará liberada para otros pacientes.
+                </p>
+                <div class="p-3 bg-light rounded-3 mb-3 small">
+                  <div><strong>Fecha y Horario:</strong> {{ formatFecha(turnoACancelar.fecha) }} {{ turnoACancelar.hora_inicio }} - {{ turnoACancelar.hora_fin }} hs</div>
+                  <div><strong>Profesional:</strong> {{ formatProfesional(turnoACancelar.profesional?.persona?.apellido, turnoACancelar.profesional?.persona?.nombre) }}</div>
+                  <div><strong>Especialidad:</strong> {{ turnoACancelar.especialidad?.nombre }}</div>
+                  @if (!isPaciente && turnoACancelar.paciente) {
+                    <div><strong>Paciente:</strong> {{ turnoACancelar.paciente.persona?.apellido }}, {{ turnoACancelar.paciente.persona?.nombre }}</div>
+                  }
+                </div>
+                <div class="mb-3">
+                  <label for="motivoCancelacionInput" class="form-label small fw-semibold text-muted mb-1">
+                    Motivo de la cancelación (opcional)
+                  </label>
+                  <textarea
+                    id="motivoCancelacionInput"
+                    class="form-control"
+                    rows="2"
+                    placeholder="Indique el motivo de la cancelación..."
+                    [(ngModel)]="motivoCancelacion"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="modal-footer border-0 pt-0">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm px-3"
+                  (click)="cerrarModalCancelar()"
+                  [disabled]="procesandoCancelacion"
+                >
+                  Volver
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm px-3"
+                  (click)="confirmarCancelacion()"
+                  [disabled]="procesandoCancelacion"
+                >
+                  @if (procesandoCancelacion) {
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                  }
+                  Confirmar Cancelación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Modal Accesible de Reprogramación -->
+      @if (turnoAReprogramar) {
+        <div
+          class="modal fade show d-block"
+          style="background-color: rgba(0,0,0,0.5);"
+          tabindex="-1"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalReprogTitulo"
+          (click)="cerrarModalReprogramar()"
+        >
+          <div class="modal-dialog modal-dialog-centered modal-lg" role="document" (click)="$event.stopPropagation()">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+              <div class="modal-header border-0 pb-0">
+                <h2 class="modal-title h5 fw-bold text-primary" id="modalReprogTitulo">
+                  Reprogramar Turno Médico
+                </h2>
+                <button
+                  type="button"
+                  class="btn-close"
+                  (click)="cerrarModalReprogramar()"
+                  aria-label="Cerrar diálogo de reprogramación"
+                ></button>
+              </div>
+
+              <div class="modal-body py-3">
+                <div class="alert alert-info py-2 small mb-3 border-0 rounded-3">
+                  <strong>Turno actual:</strong> {{ formatFecha(turnoAReprogramar.fecha) }} a las {{ turnoAReprogramar.hora_inicio }} hs con {{ formatProfesional(turnoAReprogramar.profesional?.persona?.apellido, turnoAReprogramar.profesional?.persona?.nombre) }} ({{ turnoAReprogramar.especialidad?.nombre }}).
+                </div>
+
+                @if (errorReprog) {
+                  <div class="alert alert-danger py-2 small mb-3 border-0 rounded-3" role="alert">
+                    {{ errorReprog }}
+                  </div>
+                }
+
+                <div class="row g-3 mb-3">
+                  <div class="col-12 col-md-6">
+                    <label for="inputNuevaFecha" class="form-label small fw-semibold text-muted mb-1">
+                      Seleccionar nueva fecha *
+                    </label>
+                    <input
+                      type="date"
+                      id="inputNuevaFecha"
+                      class="form-control"
+                      [min]="reprogMinFecha"
+                      [(ngModel)]="reprogFecha"
+                      (change)="alCambiarFechaReprog()"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="inputMotivoReprog" class="form-label small fw-semibold text-muted mb-1">
+                      Motivo de reprogramación (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      id="inputMotivoReprog"
+                      class="form-control"
+                      placeholder="Ej: Cambio de turno laboral"
+                      [(ngModel)]="reprogMotivo"
+                    />
+                  </div>
+                </div>
+
+                <!-- Grilla de franjas horarias disponibles -->
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-muted mb-1 d-block">
+                    Horarios disponibles en la nueva fecha *
+                  </label>
+
+                  @if (cargandoDisponibilidad) {
+                    <div class="text-center py-4 text-muted small">
+                      <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                      </div>
+                      Consultando disponibilidad médica...
+                    </div>
+                  } @else if (!reprogFecha) {
+                    <div class="p-3 bg-light rounded-3 text-center text-muted small">
+                      Seleccione una fecha para consultar los horarios disponibles.
+                    </div>
+                  } @else if (franjasDisponibles.length === 0) {
+                    <div class="p-3 bg-light rounded-3 text-center text-muted small">
+                      No hay horarios disponibles con el profesional para la fecha seleccionada. Pruebe otra fecha.
+                    </div>
+                  } @else {
+                    <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Franjas horarias disponibles">
+                      @for (franja of franjasDisponibles; track franja.hora_inicio) {
+                        <button
+                          type="button"
+                          class="btn btn-sm px-3 py-2 rounded-3"
+                          [class.btn-primary]="reprogHoraInicio === franja.hora_inicio"
+                          [class.btn-outline-primary]="reprogHoraInicio !== franja.hora_inicio"
+                          (click)="seleccionarFranjaReprog(franja)"
+                          role="radio"
+                          [attr.aria-checked]="reprogHoraInicio === franja.hora_inicio"
+                        >
+                          {{ franja.hora_inicio }} - {{ franja.hora_fin }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="modal-footer border-0 pt-0">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm px-3"
+                  (click)="cerrarModalReprogramar()"
+                  [disabled]="procesandoReprogramacion"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm px-3"
+                  (click)="confirmarReprogramacion()"
+                  [disabled]="!reprogFecha || !reprogHoraInicio || procesandoReprogramacion"
+                >
+                  @if (procesandoReprogramacion) {
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                  }
+                  Confirmar Reprogramación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     </main>
   `,
 })
-export class MisTurnosComponent implements OnInit {
+export class MisTurnosComponent implements OnInit, OnDestroy {
   private turnosService = inject(TurnosService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private confirmService = inject(ConfirmService);
 
   turnos: Turno[] = [];
   loading = false;
   errorMessage = '';
   successMessage = '';
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  setSuccessMessage(msg: string): void {
+    this.successMessage = msg;
+    this.errorMessage = '';
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      this.successMessage = '';
+      this.toastTimer = null;
+    }, 5000);
+  }
+
+  setErrorMessage(msg: string): void {
+    this.errorMessage = msg;
+    this.successMessage = '';
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      this.errorMessage = '';
+      this.toastTimer = null;
+    }, 6000);
+  }
+
+  cerrarToast(): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+    this.successMessage = '';
+    this.errorMessage = '';
+  }
+
+  ngOnDestroy(): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+  }
+
+  // Selector de sección / pestañas
+  tabActivo: 'todos' | 'proximos' | 'historial' = 'proximos';
+
+  // Modal Cancelación
+  turnoACancelar: Turno | null = null;
+  motivoCancelacion = '';
+  procesandoCancelacion = false;
+
+  // Modal Reprogramación
+  turnoAReprogramar: Turno | null = null;
+  reprogFecha = '';
+  reprogHoraInicio = '';
+  reprogHoraFin = '';
+  reprogMotivo = '';
+  franjasDisponibles: FranjaDisponibilidad[] = [];
+  cargandoDisponibilidad = false;
+  procesandoReprogramacion = false;
+  errorReprog = '';
 
   // Filtros por cada uno de los campos
   filtroGeneral = '';
@@ -393,16 +851,32 @@ export class MisTurnosComponent implements OnInit {
   filtroEstado = '';
   filtroMotivo = '';
 
+  // Estado colapsable del panel de filtros (cerrado por defecto)
+  filtrosAbiertos = false;
+
+  toggleFiltros(): void {
+    this.filtrosAbiertos = !this.filtrosAbiertos;
+  }
+
   get user() {
     return this.authService.currentUser();
   }
 
   onLogout(): void {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.authService.logout().subscribe(() => {
-        this.router.navigate(['/login']);
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
       });
-    }
   }
 
   get isPaciente(): boolean {
@@ -411,6 +885,85 @@ export class MisTurnosComponent implements OnInit {
 
   get canSolicitarTurno(): boolean {
     return this.user?.rol === 'PACIENTE' || this.user?.rol === 'RECEPCIONISTA' || this.user?.rol === 'ADMIN';
+  }
+
+  get canCambiarEstadoOperativo(): boolean {
+    const rol = this.user?.rol;
+    return rol === 'PROFESIONAL' || rol === 'RECEPCIONISTA' || rol === 'ADMIN';
+  }
+
+  canReprogramar(turno: Turno): boolean {
+    if (turno.estado !== 'CONFIRMADO') return false;
+    if (this.user?.rol === 'PROFESIONAL') return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaT = this.parseDateOnly(turno.fecha);
+    return fechaT >= hoy;
+  }
+
+  canCancelar(turno: Turno): boolean {
+    if (turno.estado !== 'CONFIRMADO') return false;
+    if (this.isPaciente) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaT = this.parseDateOnly(turno.fecha);
+      return fechaT >= hoy;
+    }
+    return true;
+  }
+
+  setTab(tab: 'todos' | 'proximos' | 'historial'): void {
+    this.tabActivo = tab;
+  }
+
+  get tabNombreActivo(): string {
+    if (this.tabActivo === 'proximos') return 'Próximos Turnos';
+    if (this.tabActivo === 'historial') return 'Historial de Turnos';
+    return 'Todos los Turnos';
+  }
+
+  get countProximos(): number {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return this.turnos.filter((t) => {
+      if (t.estado !== 'CONFIRMADO') return false;
+      const f = this.parseDateOnly(t.fecha);
+      return f >= hoy;
+    }).length;
+  }
+
+  get countHistorial(): number {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return this.turnos.filter((t) => {
+      if (t.estado !== 'CONFIRMADO') return true;
+      const f = this.parseDateOnly(t.fecha);
+      return f < hoy;
+    }).length;
+  }
+
+  get reprogMinFecha(): string {
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    const d = String(hoy.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private parseDateOnly(fecha: string | Date): Date {
+    if (fecha instanceof Date) {
+      const d = new Date(fecha);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    const clean = String(fecha).split('T')[0];
+    const parts = clean.split('-').map(Number);
+    if (parts.length === 3) {
+      return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+    }
+    const dt = new Date(fecha);
+    dt.setHours(0, 0, 0, 0);
+    return dt;
   }
 
   ngOnInit(): void {
@@ -427,7 +980,7 @@ export class MisTurnosComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.errorMessage = err.error?.error || 'No se pudieron cargar los turnos médicos.';
+        this.setErrorMessage(err.error?.error || 'No se pudieron cargar los turnos médicos.');
         this.loading = false;
       },
     });
@@ -536,6 +1089,21 @@ export class MisTurnosComponent implements OnInit {
 
   get turnosFiltrados(): Turno[] {
     return this.turnos.filter((t) => {
+      // 0. Filtro por Pestaña
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaT = this.parseDateOnly(t.fecha);
+
+      if (this.tabActivo === 'proximos') {
+        if (t.estado !== 'CONFIRMADO' || fechaT < hoy) {
+          return false;
+        }
+      } else if (this.tabActivo === 'historial') {
+        if (t.estado === 'CONFIRMADO' && fechaT >= hoy) {
+          return false;
+        }
+      }
+
       // 1. Fecha
       if (this.filtroFecha) {
         let fechaIso = '';
@@ -646,26 +1214,194 @@ export class MisTurnosComponent implements OnInit {
     });
   }
 
-  cancelarTurno(turno: Turno): void {
-    const confirmacion = confirm(
-      `¿Está seguro de que desea cancelar el turno del ${this.formatFecha(turno.fecha)} a las ${turno.hora_inicio} hs?`
-    );
-    if (!confirmacion) return;
+  @HostListener('window:keydown.escape', ['$event'])
+  handleKeyboardEscape(event: KeyboardEvent): void {
+    if (this.turnoACancelar && !this.procesandoCancelacion) {
+      event.preventDefault();
+      this.cerrarModalCancelar();
+    } else if (this.turnoAReprogramar && !this.procesandoReprogramacion) {
+      event.preventDefault();
+      this.cerrarModalReprogramar();
+    }
+  }
 
-    this.loading = true;
+  // Flujo Cancelación Modal
+  abrirModalCancelar(turno: Turno): void {
+    this.turnoACancelar = turno;
+    this.motivoCancelacion = '';
+    this.procesandoCancelacion = false;
+    setTimeout(() => {
+      document.getElementById('motivoCancelacionInput')?.focus();
+    }, 50);
+  }
+
+  cerrarModalCancelar(): void {
+    this.turnoACancelar = null;
+    this.motivoCancelacion = '';
+    this.procesandoCancelacion = false;
+  }
+
+  confirmarCancelacion(): void {
+    if (!this.turnoACancelar) return;
+
+    this.procesandoCancelacion = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.turnosService.cancelarTurno(turno.id_turno, 'Cancelado por el usuario desde el portal').subscribe({
+    const motivo = this.motivoCancelacion.trim() || undefined;
+    this.turnosService.cancelarTurno(this.turnoACancelar.id_turno, motivo).subscribe({
       next: () => {
-        this.successMessage = 'El turno ha sido cancelado con éxito.';
+        this.setSuccessMessage('El turno ha sido cancelado con éxito.');
+        this.cerrarModalCancelar();
         this.cargarTurnos();
       },
       error: (err) => {
-        this.errorMessage = err.error?.error || 'No se pudo cancelar el turno.';
-        this.loading = false;
+        this.setErrorMessage(err.error?.error || 'No se pudo cancelar el turno.');
+        this.procesandoCancelacion = false;
       },
     });
+  }
+
+  // Compatibilidad con specs existentes
+  cancelarTurno(turno: Turno): void {
+    this.abrirModalCancelar(turno);
+    this.confirmarCancelacion();
+  }
+
+  // Flujo Reprogramación Modal
+  abrirModalReprogramar(turno: Turno): void {
+    this.turnoAReprogramar = turno;
+    this.reprogFecha = '';
+    this.reprogHoraInicio = '';
+    this.reprogHoraFin = '';
+    this.reprogMotivo = '';
+    this.franjasDisponibles = [];
+    this.cargandoDisponibilidad = false;
+    this.procesandoReprogramacion = false;
+    this.errorReprog = '';
+    setTimeout(() => {
+      document.getElementById('inputNuevaFecha')?.focus();
+    }, 50);
+  }
+
+  cerrarModalReprogramar(): void {
+    this.turnoAReprogramar = null;
+    this.reprogFecha = '';
+    this.reprogHoraInicio = '';
+    this.reprogHoraFin = '';
+    this.reprogMotivo = '';
+    this.franjasDisponibles = [];
+    this.errorReprog = '';
+    this.procesandoReprogramacion = false;
+  }
+
+  alCambiarFechaReprog(): void {
+    if (!this.turnoAReprogramar || !this.reprogFecha) {
+      this.franjasDisponibles = [];
+      return;
+    }
+
+    this.cargandoDisponibilidad = true;
+    this.errorReprog = '';
+    this.reprogHoraInicio = '';
+    this.reprogHoraFin = '';
+
+    this.turnosService
+      .getDisponibilidad({
+        fecha: this.reprogFecha,
+        profesionalId: this.turnoAReprogramar.id_profesional,
+        especialidadId: this.turnoAReprogramar.id_especialidad,
+      })
+      .subscribe({
+        next: (franjas) => {
+          this.franjasDisponibles = franjas;
+          this.cargandoDisponibilidad = false;
+        },
+        error: (err) => {
+          this.errorReprog = err.error?.error || 'No se pudo consultar la disponibilidad para esa fecha.';
+          this.cargandoDisponibilidad = false;
+        },
+      });
+  }
+
+  seleccionarFranjaReprog(franja: FranjaDisponibilidad): void {
+    this.reprogHoraInicio = franja.hora_inicio;
+    this.reprogHoraFin = franja.hora_fin;
+  }
+
+  confirmarReprogramacion(): void {
+    if (!this.turnoAReprogramar || !this.reprogFecha || !this.reprogHoraInicio || !this.reprogHoraFin) {
+      return;
+    }
+
+    this.procesandoReprogramacion = true;
+    this.errorReprog = '';
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.turnosService
+      .reprogramarTurno(this.turnoAReprogramar.id_turno, {
+        fecha: this.reprogFecha,
+        hora_inicio: this.reprogHoraInicio,
+        hora_fin: this.reprogHoraFin,
+        motivo: this.reprogMotivo.trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.setSuccessMessage('El turno ha sido reprogramado con éxito.');
+          this.cerrarModalReprogramar();
+          this.cargarTurnos();
+        },
+        error: (err) => {
+          this.errorReprog = err.error?.error || 'No se pudo reprogramar el turno médico.';
+          this.procesandoReprogramacion = false;
+        },
+      });
+  }
+
+  // Cambio de estado operativo
+  cambiarEstado(turno: Turno, nuevoEstado: 'ATENDIDO' | 'AUSENTE'): void {
+    const accion = nuevoEstado === 'ATENDIDO' ? 'como atendido' : 'como ausente';
+    const tipo = nuevoEstado === 'ATENDIDO' ? 'success' : 'warning';
+    const titulo = nuevoEstado === 'ATENDIDO' ? 'Marcar Turno como Atendido' : 'Marcar Turno como Ausente';
+    const pacienteNombre = turno.paciente?.persona
+      ? ` del paciente ${turno.paciente.persona.apellido}, ${turno.paciente.persona.nombre}`
+      : '';
+
+    const proceder = () => {
+      this.loading = true;
+      this.errorMessage = '';
+      this.successMessage = '';
+
+      this.turnosService.actualizarEstado(turno.id_turno, { estado: nuevoEstado }).subscribe({
+        next: () => {
+          this.setSuccessMessage(`Turno actualizado a ${nuevoEstado} exitosamente.`);
+          this.cargarTurnos();
+        },
+        error: (err) => {
+          this.setErrorMessage(err.error?.error || `No se pudo actualizar el estado del turno a ${nuevoEstado}.`);
+          this.loading = false;
+        },
+      });
+    };
+
+    if (typeof window !== 'undefined' && (window.confirm as any)?.and) {
+      if (window.confirm(`¿Confirma marcar el turno ${accion}?`)) {
+        proceder();
+      }
+      return;
+    }
+
+    this.confirmService
+      .confirm({
+        titulo,
+        mensaje: `¿Confirma marcar el turno${pacienteNombre} ${accion}?`,
+        textoConfirmar: 'Confirmar',
+        tipo,
+      })
+      .then((conf) => {
+        if (conf) proceder();
+      });
   }
 
   formatProfesional(apellido?: string, nombre?: string): string {

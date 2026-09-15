@@ -12,3 +12,5 @@ turnosRouter.post('/', requireRole(Rol.PACIENTE, Rol.RECEPCIONISTA, Rol.ADMIN), 
 turnosRouter.get('/', (req, res) => turnosController.getTurnos(req, res));
 turnosRouter.get('/:id', (req, res) => turnosController.getTurnoById(req, res));
 turnosRouter.patch('/:id/cancelar', (req, res) => turnosController.cancelarTurno(req, res));
+turnosRouter.patch('/:id/reprogramar', requireRole(Rol.PACIENTE, Rol.RECEPCIONISTA, Rol.ADMIN), (req, res) => turnosController.reprogramarTurno(req, res));
+turnosRouter.patch('/:id/estado', requireRole(Rol.PROFESIONAL, Rol.RECEPCIONISTA, Rol.ADMIN), (req, res) => turnosController.actualizarEstado(req, res));
