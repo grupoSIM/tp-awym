@@ -61,68 +61,140 @@ async function main() {
   }
 
   for (const u of usuarios) {
-    await prisma.usuario.deleteMany({
-      where: { persona: { dni: u.dni } },
-    });
-    await prisma.paciente.deleteMany({
-      where: { persona: { dni: u.dni } },
-    });
-    await prisma.agenda.deleteMany({
-      where: { profesional: { persona: { dni: u.dni } } },
-    });
-    await prisma.profesionalEspecialidad.deleteMany({
-      where: { profesional: { persona: { dni: u.dni } } },
-    });
-    await prisma.profesional.deleteMany({
-      where: { persona: { dni: u.dni } },
-    });
-    await prisma.persona.deleteMany({
+    let persona = await prisma.persona.findUnique({
       where: { dni: u.dni },
+      include: {
+        usuario: true,
+        paciente: true,
+        profesional: {
+          include: {
+            especialidades: true,
+          },
+        },
+      },
     });
 
-    await prisma.persona.create({
-      data: {
-        dni: u.dni,
-        nombre: u.nombre,
-        apellido: u.apellido,
-        email: u.email,
-        telefono: u.telefono,
-        fecha_nacimiento: u.fecha_nacimiento,
-        usuario: {
-          create: {
+    if (!persona) {
+      await prisma.persona.create({
+        data: {
+          dni: u.dni,
+          nombre: u.nombre,
+          apellido: u.apellido,
+          email: u.email,
+          telefono: u.telefono,
+          fecha_nacimiento: u.fecha_nacimiento,
+          usuario: {
+            create: {
+              password_hash: passwordHash,
+              rol: u.rol,
+              estado: EstadoUsuario.ACTIVO,
+            },
+          },
+          ...(u.rol === Rol.PACIENTE
+            ? {
+                paciente: {
+                  create: {
+                    obra_social: 'OSDE 210',
+                    activo: true,
+                  },
+                },
+              }
+            : {}),
+          ...(u.rol === Rol.PROFESIONAL
+            ? {
+                profesional: {
+                  create: {
+                    matricula: 'MP-33441',
+                    activo: true,
+                    especialidades: {
+                      create: [
+                        { especialidad: { connect: { nombre: 'Clínica Médica' } } },
+                        { especialidad: { connect: { nombre: 'Cardiología' } } },
+                      ],
+                    },
+                  },
+                },
+              }
+            : {}),
+        },
+      });
+    } else {
+      if (persona.usuario) {
+        await prisma.usuario.update({
+          where: { id_persona: persona.id_persona },
+          data: {
             password_hash: passwordHash,
             rol: u.rol,
             estado: EstadoUsuario.ACTIVO,
           },
-        },
-        ...(u.rol === Rol.PACIENTE
-          ? {
-              paciente: {
-                create: {
-                  obra_social: 'OSDE 210',
-                  activo: true,
-                },
+        });
+      } else {
+        await prisma.usuario.create({
+          data: {
+            id_persona: persona.id_persona,
+            password_hash: passwordHash,
+            rol: u.rol,
+            estado: EstadoUsuario.ACTIVO,
+          },
+        });
+      }
+
+      if (u.rol === Rol.PACIENTE && !persona.paciente) {
+        await prisma.paciente.create({
+          data: {
+            id_persona: persona.id_persona,
+            obra_social: 'OSDE 210',
+            activo: true,
+          },
+        });
+      }
+
+      if (u.rol === Rol.PROFESIONAL) {
+        let profesional = persona.profesional;
+        if (!profesional) {
+          profesional = await prisma.profesional.create({
+            data: {
+              id_persona: persona.id_persona,
+              matricula: 'MP-33441',
+              activo: true,
+            },
+            include: { especialidades: true },
+          });
+        }
+        const espClinica = await prisma.especialidad.findUnique({ where: { nombre: 'Clínica Médica' } });
+        const espCardio = await prisma.especialidad.findUnique({ where: { nombre: 'Cardiología' } });
+        if (espClinica) {
+          await prisma.profesionalEspecialidad.upsert({
+            where: {
+              id_profesional_id_especialidad: {
+                id_profesional: profesional.id_profesional,
+                id_especialidad: espClinica.id_especialidad,
               },
-            }
-          : {}),
-        ...(u.rol === Rol.PROFESIONAL
-          ? {
-              profesional: {
-                create: {
-                  matricula: 'MP-33441',
-                  activo: true,
-                  especialidades: {
-                    create: [
-                      { especialidad: { connect: { nombre: 'Clínica Médica' } } },
-                      { especialidad: { connect: { nombre: 'Cardiología' } } },
-                    ],
-                  },
-                },
+            },
+            update: {},
+            create: {
+              id_profesional: profesional.id_profesional,
+              id_especialidad: espClinica.id_especialidad,
+            },
+          });
+        }
+        if (espCardio) {
+          await prisma.profesionalEspecialidad.upsert({
+            where: {
+              id_profesional_id_especialidad: {
+                id_profesional: profesional.id_profesional,
+                id_especialidad: espCardio.id_especialidad,
               },
-            }
-          : {}),
-      },
-    });
+            },
+            update: {},
+            create: {
+              id_profesional: profesional.id_profesional,
+              id_especialidad: espCardio.id_especialidad,
+            },
+          });
+        }
+      }
+    }
   }
 
   // Crear consultorios base
@@ -141,47 +213,49 @@ async function main() {
     consultoriosCreados.push(cons);
   }
 
-  // Crear agenda para Dra. Maria Gomez (profesional)
+  // Crear agenda para Dra. Maria Gomez (profesional) si aún no tiene
   const draMaria = await prisma.profesional.findFirst({
     where: { persona: { dni: '33333333' } },
   });
 
   if (draMaria && consultoriosCreados.length >= 2) {
-    await prisma.agenda.deleteMany({
+    const existingAgendas = await prisma.agenda.count({
       where: { id_profesional: draMaria.id_profesional },
     });
 
-    await prisma.agenda.createMany({
-      data: [
-        {
-          id_profesional: draMaria.id_profesional,
-          id_consultorio: consultoriosCreados[0].id_consultorio,
-          dia_semana: 1, // Lunes
-          hora_inicio: '08:00',
-          hora_fin: '12:00',
-          duracion_minutos: 30,
-          activo: true,
-        },
-        {
-          id_profesional: draMaria.id_profesional,
-          id_consultorio: consultoriosCreados[1].id_consultorio,
-          dia_semana: 3, // Miércoles
-          hora_inicio: '14:00',
-          hora_fin: '18:00',
-          duracion_minutos: 30,
-          activo: true,
-        },
-        {
-          id_profesional: draMaria.id_profesional,
-          id_consultorio: consultoriosCreados[0].id_consultorio,
-          dia_semana: 5, // Viernes
-          hora_inicio: '09:00',
-          hora_fin: '13:00',
-          duracion_minutos: 30,
-          activo: true,
-        },
-      ],
-    });
+    if (existingAgendas === 0) {
+      await prisma.agenda.createMany({
+        data: [
+          {
+            id_profesional: draMaria.id_profesional,
+            id_consultorio: consultoriosCreados[0].id_consultorio,
+            dia_semana: 1, // Lunes
+            hora_inicio: '08:00',
+            hora_fin: '12:00',
+            duracion_minutos: 30,
+            activo: true,
+          },
+          {
+            id_profesional: draMaria.id_profesional,
+            id_consultorio: consultoriosCreados[1].id_consultorio,
+            dia_semana: 3, // Miércoles
+            hora_inicio: '14:00',
+            hora_fin: '18:00',
+            duracion_minutos: 30,
+            activo: true,
+          },
+          {
+            id_profesional: draMaria.id_profesional,
+            id_consultorio: consultoriosCreados[0].id_consultorio,
+            dia_semana: 5, // Viernes
+            hora_inicio: '09:00',
+            hora_fin: '13:00',
+            duracion_minutos: 30,
+            activo: true,
+          },
+        ],
+      });
+    }
   }
 
   console.log('Seed completado con éxito: 4 usuarios, especialidades, consultorios y agendas creados');
