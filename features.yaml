@@ -1,6 +1,6 @@
 version: 1
 project: "tp-awym-gemini"
-status: in_progress
+status: completed
 
 features:
   - id: feat-001
