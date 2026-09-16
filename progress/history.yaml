@@ -438,3 +438,76 @@ events:
     actor: 'José Chamorro'
     reference: 'specs/features/feat-006/evidence.md'
     gate_references: ['approvals.specification', 'approvals.publication', 'approvals.architecture']
+  - id: MIG-007
+    kind: migration
+    feature: 'feat-007'
+    from: null
+    to: 'discovery'
+    occurred_at: '2026-09-15T20:35:00-03:00'
+    actor: 'José Chamorro'
+    reference: 'features.yaml'
+    prior_history: unknown
+    note: 'Activación de feat-007 en fase discovery'
+  - id: TRN-044
+    kind: transition
+    feature: 'feat-007'
+    from: 'discovery'
+    to: 'specification'
+    occurred_at: '2026-09-15T20:35:24.2539303-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-007/requirements.md'
+    gate_references: []
+  - id: TRN-045
+    kind: transition
+    feature: 'feat-007'
+    from: 'specification'
+    to: 'spec_review'
+    occurred_at: '2026-09-15T20:36:20.2537284-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-007'
+    gate_references: []
+  - id: TRN-046
+    kind: transition
+    feature: 'feat-007'
+    from: 'spec_review'
+    to: 'approved'
+    occurred_at: '2026-09-15T20:37:31.3749621-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-007/spec-review.md'
+    gate_references: ['approvals.architecture']
+  - id: TRN-047
+    kind: transition
+    feature: 'feat-007'
+    from: 'approved'
+    to: 'implementation'
+    occurred_at: '2026-09-15T20:38:55.8411781-03:00'
+    actor: 'José Chamorro'
+    reference: 'progress/current.yaml'
+    gate_references: ['approvals.specification', 'approvals.architecture']
+  - id: TRN-048
+    kind: transition
+    feature: 'feat-007'
+    from: 'implementation'
+    to: 'verification'
+    occurred_at: '2026-09-15T20:50:24.1855559-03:00'
+    actor: 'qa-verifier'
+    reference: 'specs/features/feat-007/evidence.md'
+    gate_references: ['approvals.specification', 'approvals.architecture']
+  - id: TRN-049
+    kind: transition
+    feature: 'feat-007'
+    from: 'verification'
+    to: 'publication_review'
+    occurred_at: '2026-09-15T20:50:42.8835548-03:00'
+    actor: 'qa-verifier'
+    reference: 'specs/features/feat-007/evidence.md'
+    gate_references: ['approvals.specification', 'approvals.architecture']
+  - id: TRN-050
+    kind: transition
+    feature: 'feat-007'
+    from: 'publication_review'
+    to: 'done'
+    occurred_at: '2026-09-15T22:36:43.8075489-03:00'
+    actor: 'José Chamorro'
+    reference: 'specs/features/feat-007/evidence.md'
+    gate_references: ['approvals.specification', 'approvals.publication', 'approvals.architecture']

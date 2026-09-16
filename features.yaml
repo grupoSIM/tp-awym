@@ -47,7 +47,7 @@ features:
 
   - id: feat-007
     name: Reportes e indicadores de gestión y ausentismo
-    status: proposed
+    status: done
     priority: should
     depends_on:
       - feat-005

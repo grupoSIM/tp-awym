@@ -12,6 +12,7 @@ import { AgendaFormComponent } from './features/agendas/agenda-form.component';
 import { PerfilPacienteComponent } from './features/portal/perfil-paciente.component';
 import { ReservaTurnoComponent } from './features/turnos/reserva-turno.component';
 import { MisTurnosComponent } from './features/turnos/mis-turnos.component';
+import { ReportesComponent } from './features/reportes/reportes.component';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { roleGuard } from './core/guards/role.guard';
@@ -27,6 +28,12 @@ export const routes: Routes = [
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
+  },
+  {
+    path: 'reportes',
+    component: ReportesComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN'] },
   },
   {
     path: 'pacientes',

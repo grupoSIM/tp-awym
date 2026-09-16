@@ -10,6 +10,7 @@ import { consultoriosRouter } from './routes/consultorios.routes';
 import { agendasRouter } from './routes/agendas.routes';
 import { portalRouter } from './routes/portal.routes';
 import { turnosRouter } from './routes/turnos.routes';
+import { reportesRouter } from './routes/reportes.routes';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/v1/consultorios', consultoriosRouter);
 app.use('/api/v1/agendas', agendasRouter);
 app.use('/api/v1/portal', portalRouter);
 app.use('/api/v1/turnos', turnosRouter);
+app.use('/api/v1/reportes', reportesRouter);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
