@@ -5,9 +5,10 @@ import { EspecialidadesService } from '../../core/services/especialidades.servic
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 describe('ReportesComponent (feat-007)', () => {
   let component: ReportesComponent;
@@ -88,13 +89,19 @@ describe('ReportesComponent (feat-007)', () => {
 
   const mockAuthService = {
     currentUser: signal({ id: 1, nombre: 'Admin', apellido: 'Sistema', rol: 'ADMIN' }),
+    logout: jasmine.createSpy('logout').and.returnValue(of(undefined)),
   };
 
   const mockToastService = {
     show: jasmine.createSpy('show'),
   };
 
+  const mockConfirmService = {
+    confirm: jasmine.createSpy('confirm').and.returnValue(Promise.resolve(true)),
+  };
+
   beforeEach(async () => {
+    mockReportesService.getResumen.and.returnValue(of(mockResumenConDatos));
     await TestBed.configureTestingModule({
       imports: [ReportesComponent],
       providers: [
@@ -104,6 +111,7 @@ describe('ReportesComponent (feat-007)', () => {
         { provide: ProfesionalesService, useValue: mockProfesionalesService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ToastService, useValue: mockToastService },
+        { provide: ConfirmService, useValue: mockConfirmService },
       ],
     }).compileComponents();
 
@@ -178,5 +186,49 @@ describe('ReportesComponent (feat-007)', () => {
         expect(label).withContext(`El input con id ${id} debe tener una etiqueta asociada`).not.toBeNull();
       }
     });
+  });
+
+  it('debe solicitar confirmación y cerrar sesión al accionar el botón de Cerrar Sesión', async () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
+
+    component.onLogout();
+    expect(mockConfirmService.confirm).toHaveBeenCalledWith(jasmine.objectContaining({
+      titulo: 'Cerrar Sesión',
+      textoConfirmar: 'Cerrar Sesión',
+      tipo: 'danger',
+    }));
+
+    await fixture.whenStable();
+    expect(mockAuthService.logout).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('debe incluir accesos directos de Hoy y Última semana además de los rangos mensuales', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Hoy');
+    expect(compiled.textContent).toContain('Última semana');
+    expect(compiled.textContent).toContain('Este mes');
+    expect(compiled.textContent).toContain('Mes anterior');
+    expect(compiled.textContent).toContain('Últimos 30 días');
+
+    mockReportesService.getResumen.calls.reset();
+    component.establecerRangoHoy();
+    const d = new Date();
+    const hoyStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    expect(component.fechaDesde).toBe(hoyStr);
+    expect(component.fechaHasta).toBe(hoyStr);
+    expect(mockReportesService.getResumen).toHaveBeenCalled();
+
+    mockReportesService.getResumen.calls.reset();
+    component.establecerRangoUltimaSemana();
+    expect(component.fechaHasta).toBe(hoyStr);
+    expect(mockReportesService.getResumen).toHaveBeenCalled();
+  });
+
+  it('debe formatear fechas en formato regional DD/MM/YYYY', () => {
+    expect(component.formatFecha('2026-09-16')).toBe('16/09/2026');
+    expect(component.formatFecha('2026-09-16T15:00:00Z')).toBe('16/09/2026');
+    expect(component.formatFecha('')).toBe('');
   });
 });

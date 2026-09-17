@@ -282,10 +282,19 @@ export class ReportesService {
     const profesionales = await this.getPorProfesionales(filtros);
 
     const escapeCsv = (str: any) => `"${String(str ?? '').replace(/"/g, '""')}"`;
+    const formatFechaCsv = (f?: string) => {
+      if (!f) return '';
+      const clean = f.split('T')[0];
+      const parts = clean.split('-');
+      if (parts.length === 3) {
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      }
+      return f;
+    };
 
     const lineas: string[] = [];
     lineas.push('\uFEFF"REPORTE DE GESTIÓN Y AUSENTISMO - CENTRO DE SALUD"');
-    lineas.push(`"Período consultado:","${filtros.desde || 'Inicio'} hasta ${filtros.hasta || 'Fin'}"`);
+    lineas.push(`"Período consultado:","${formatFechaCsv(filtros.desde) || 'Inicio'} hasta ${formatFechaCsv(filtros.hasta) || 'Fin'}"`);
     lineas.push('');
     lineas.push('"RESUMEN GENERAL"');
     lineas.push('"Total Turnos","Atendidos","Cancelados","Ausentes","Confirmados","% Ausentismo","% Cancelación","% Ocupación"');

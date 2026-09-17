@@ -9,6 +9,12 @@
     "test:server": "npm run test --prefix server",
     "test:client": "npm run test:ci --prefix client",
     "server": "npm run dev --prefix server",
-    "client": "npm run start --prefix client"
+    "client": "npm run start --prefix client",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }

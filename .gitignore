@@ -9,3 +9,5 @@ Thumbs.db
 .harness-test-*/
 dist/
 .angular/
+playwright-report/
+test-results/

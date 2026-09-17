@@ -52,8 +52,17 @@
               placeholder="Buscar por DNI, nombre o apellido..."
               [value]="searchTerm"
               (input)="onSearchInput($event)"
+              (keyup.enter)="ejecutarBusquedaInmediata()"
               aria-label="Buscar paciente por DNI, nombre o apellido"
             />
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              (click)="ejecutarBusquedaInmediata()"
+              aria-label="Buscar paciente"
+            >
+              Buscar
+            </button>
           </div>
         </div>
         <div class="col-12 col-md-4">

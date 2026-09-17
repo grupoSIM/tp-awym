@@ -1,8 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { PortalService } from '../../core/services/portal.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { PerfilPaciente } from '../../core/models/perfil-paciente.model';
 
 @Component({
@@ -16,8 +18,11 @@ import { PerfilPaciente } from '../../core/models/perfil-paciente.model';
           <span aria-hidden="true">⚕</span>
           <span>Gestión de Turnos</span>
         </a>
-        <div class="ms-auto">
+        <div class="d-flex align-items-center gap-3 ms-auto">
           <a routerLink="/dashboard" class="btn btn-outline-light btn-sm px-3">Volver al Panel</a>
+          <button type="button" class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+            Cerrar Sesión
+          </button>
         </div>
       </div>
     </nav>
@@ -145,6 +150,9 @@ import { PerfilPaciente } from '../../core/models/perfil-paciente.model';
 export class PerfilPacienteComponent implements OnInit {
   private fb = inject(FormBuilder);
   private portalService = inject(PortalService);
+  private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
+  private router = inject(Router);
 
   perfil: PerfilPaciente | null = null;
   perfilForm!: FormGroup;
@@ -156,6 +164,23 @@ export class PerfilPacienteComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.cargarPerfil();
+  }
+
+  onLogout(): void {
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
+      });
   }
 
   initForm(): void {

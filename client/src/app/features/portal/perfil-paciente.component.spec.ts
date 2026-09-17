@@ -2,12 +2,17 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { PerfilPacienteComponent } from './perfil-paciente.component';
 import { PortalService } from '../../core/services/portal.service';
 import { of } from 'rxjs';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+
+import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 describe('PerfilPacienteComponent (TEST-052 / TEST-055)', () => {
   let component: PerfilPacienteComponent;
   let fixture: ComponentFixture<PerfilPacienteComponent>;
   let portalServiceSpy: jasmine.SpyObj<PortalService>;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let confirmServiceSpy: jasmine.SpyObj<ConfirmService>;
 
   const mockPerfil = {
     id_paciente: 1,
@@ -27,11 +32,19 @@ describe('PerfilPacienteComponent (TEST-052 / TEST-055)', () => {
     portalServiceSpy.getPerfil.and.returnValue(of(mockPerfil));
     portalServiceSpy.updatePerfil.and.returnValue(of({ ...mockPerfil, telefono: '1199887766' }));
 
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['logout']);
+    authServiceSpy.logout.and.returnValue(of(undefined));
+
+    confirmServiceSpy = jasmine.createSpyObj('ConfirmService', ['confirm']);
+    confirmServiceSpy.confirm.and.returnValue(Promise.resolve(true));
+
     await TestBed.configureTestingModule({
       imports: [PerfilPacienteComponent],
       providers: [
         provideRouter([]),
         { provide: PortalService, useValue: portalServiceSpy },
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: ConfirmService, useValue: confirmServiceSpy },
       ],
     }).compileComponents();
 
@@ -79,5 +92,21 @@ describe('PerfilPacienteComponent (TEST-052 / TEST-055)', () => {
 
     const alerts = compiled.querySelectorAll('[aria-live]');
     expect(alerts.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('debe solicitar confirmación y cerrar sesión al accionar Cerrar Sesión', async () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
+
+    component.onLogout();
+    expect(confirmServiceSpy.confirm).toHaveBeenCalledWith(jasmine.objectContaining({
+      titulo: 'Cerrar Sesión',
+      textoConfirmar: 'Cerrar Sesión',
+      tipo: 'danger',
+    }));
+
+    await fixture.whenStable();
+    expect(authServiceSpy.logout).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 });

@@ -75,7 +75,21 @@ import { FranjaDisponibilidad, Turno } from '../../core/models/turno.model';
             <!-- Filtros de búsqueda de disponibilidad -->
             <form [formGroup]="filtroForm" (ngSubmit)="buscarDisponibilidad()" class="row g-3 mb-4" novalidate>
               @if (isPersonalSalud) {
-                <div class="col-12">
+                <div class="col-12 col-md-5">
+                  <label for="buscarPacienteDni" class="form-label fw-semibold">Buscar Paciente por DNI / Nombre</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0" aria-hidden="true">🔍</span>
+                    <input
+                      type="search"
+                      id="buscarPacienteDni"
+                      class="form-control border-start-0"
+                      placeholder="Escriba DNI o apellido..."
+                      (input)="onBuscarPacienteInput($event)"
+                      aria-label="Buscar paciente por DNI o nombre"
+                    />
+                  </div>
+                </div>
+                <div class="col-12 col-md-7">
                   <label for="pacienteId" class="form-label fw-semibold">Paciente a asignar <span class="text-danger">*</span></label>
                   <select
                     id="pacienteId"
@@ -379,6 +393,25 @@ export class ReservaTurnoComponent implements OnInit {
     }
   }
 
+  private pacienteSearchDebounceTimer?: any;
+
+  onBuscarPacienteInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const term = input.value.trim();
+    clearTimeout(this.pacienteSearchDebounceTimer);
+    this.pacienteSearchDebounceTimer = setTimeout(() => {
+      this.pacientesService.getPacientes(term, 'activo', 1, 100).subscribe({
+        next: (res) => {
+          this.pacientes = res.data;
+          if (res.data.length === 1 || res.data.some((p) => p.persona.dni === term)) {
+            const match = res.data.find((p) => p.persona.dni === term) || res.data[0];
+            this.filtroForm.patchValue({ pacienteId: match.id_paciente });
+          }
+        },
+      });
+    }, 300);
+  }
+
   onEspecialidadChange(): void {
     const espId = this.filtroForm.value.especialidadId;
     if (espId) {
@@ -505,41 +538,33 @@ export class ReservaTurnoComponent implements OnInit {
     let y: number, m: number, d: number;
     if (fecha instanceof Date) {
       y = fecha.getUTCFullYear();
-      m = fecha.getUTCMonth();
+      m = fecha.getUTCMonth() + 1;
       d = fecha.getUTCDate();
     } else if (typeof fecha === 'string') {
       const clean = fecha.split('T')[0];
       const parts = clean.split('-');
       if (parts.length === 3) {
         y = parseInt(parts[0], 10);
-        m = parseInt(parts[1], 10) - 1;
+        m = parseInt(parts[1], 10);
         d = parseInt(parts[2], 10);
       } else {
         const dt = new Date(fecha);
         y = dt.getFullYear();
-        m = dt.getMonth();
+        m = dt.getMonth() + 1;
         d = dt.getDate();
       }
     } else {
       return '';
     }
 
-    const dateObj = new Date(y, m, d);
-    const locale = (typeof navigator !== 'undefined' && (navigator.language || (navigator.languages && navigator.languages[0]))) || 'es-AR';
-
-    try {
-      return new Intl.DateTimeFormat(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(dateObj);
-    } catch {
-      return new Intl.DateTimeFormat('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(dateObj);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) {
+      return '';
     }
+
+    const dayStr = String(d).padStart(2, '0');
+    const monthStr = String(m).padStart(2, '0');
+    const yearStr = String(y).padStart(4, '0');
+    return `${dayStr}/${monthStr}/${yearStr}`;
   }
 }
 

@@ -1,12 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { ReportesService } from '../../core/services/reportes.service';
 import { EspecialidadesService } from '../../core/services/especialidades.service';
 import { ProfesionalesService } from '../../core/services/profesionales.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { IndicadoresResumen, DesgloseEspecialidad, DesgloseProfesional, FiltrosReporte } from '../../core/models/reporte.model';
 import { Especialidad } from '../../core/models/especialidad.model';
 import { Profesional } from '../../core/models/profesional.model';
@@ -33,6 +34,9 @@ import { Profesional } from '../../core/models/profesional.model';
           <a routerLink="/dashboard" class="btn btn-outline-light btn-sm px-3">
             Volver al Panel
           </a>
+          <button type="button" class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
+            Cerrar Sesión
+          </button>
         </div>
       </div>
     </nav>
@@ -71,12 +75,17 @@ import { Profesional } from '../../core/models/profesional.model';
       <!-- Panel de Filtros -->
       <section class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white" aria-labelledby="filtros-heading">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <h2 id="filtros-heading" class="h6 fw-bold text-secondary text-uppercase mb-0">Filtros de Período y Criterios</h2>
-            <div class="btn-group btn-group-sm" role="group" aria-label="Atajos de período">
-              <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoEsteMes(); cargarReportes()">Este mes</button>
-              <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoMesAnterior()">Mes anterior</button>
-              <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoUltimos30Dias()">Últimos 30 días</button>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="small text-muted fw-semibold d-none d-md-inline">Presets rápidos:</span>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Accesos directos y presets rápidos de fecha">
+                <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoHoy()">Hoy</button>
+                <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoUltimaSemana()">Última semana</button>
+                <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoEsteMes()">Este mes</button>
+                <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoMesAnterior()">Mes anterior</button>
+                <button type="button" class="btn btn-outline-secondary" (click)="establecerRangoUltimos30Dias()">Últimos 30 días</button>
+              </div>
             </div>
           </div>
 
@@ -227,7 +236,7 @@ import { Profesional } from '../../core/models/profesional.model';
           <div class="fs-1 mb-2" aria-hidden="true">📅</div>
           <h3 class="h5 fw-bold text-dark mb-1">No se registran turnos para el período seleccionado</h3>
           <p class="text-muted mb-0 small">
-            No existen turnos otorgados entre el {{ fechaDesde }} y el {{ fechaHasta }} con los criterios aplicados. Pruebe ampliando el rango de fechas.
+            No existen turnos otorgados entre el {{ formatFecha(fechaDesde) }} y el {{ formatFecha(fechaHasta) }} con los criterios aplicados. Pruebe ampliando el rango de fechas.
           </p>
         </div>
       }
@@ -237,7 +246,10 @@ import { Profesional } from '../../core/models/profesional.model';
         <section class="card border-0 shadow-sm rounded-4 p-3 bg-white" aria-labelledby="desglose-heading">
           <div class="card-header bg-white border-0 pb-0">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-              <h2 id="desglose-heading" class="h5 fw-bold text-dark mb-0">Desglose Detallado</h2>
+              <div>
+                <h2 id="desglose-heading" class="h5 fw-bold text-dark mb-0">Desglose Detallado</h2>
+                <div class="text-muted small">Período: {{ formatFecha(fechaDesde) }} al {{ formatFecha(fechaHasta) }}</div>
+              </div>
               <ul class="nav nav-pills gap-1" role="tablist" aria-label="Selector de vista de desglose">
                 <li class="nav-item" role="presentation">
                   <button
@@ -297,7 +309,7 @@ import { Profesional } from '../../core/models/profesional.model';
                       <tr>
                         <th scope="row" class="fw-semibold">Total Turnos Otorgados</th>
                         <td class="text-end fw-bold">{{ resumen.totalTurnos }}</td>
-                        <td class="text-muted small">Volumen bruto de turnos gestionados en el período.</td>
+                        <td class="text-muted small">Volumen bruto de turnos gestionados en el período ({{ formatFecha(fechaDesde) }} al {{ formatFecha(fechaHasta) }}).</td>
                       </tr>
                       <tr>
                         <th scope="row" class="fw-semibold text-success">Turnos Atendidos</th>
@@ -468,6 +480,8 @@ export class ReportesComponent implements OnInit {
   private profesionalesService = inject(ProfesionalesService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private confirmService = inject(ConfirmService);
+  private router = inject(Router);
 
   user = this.authService.currentUser;
 
@@ -500,9 +514,26 @@ export class ReportesComponent implements OnInit {
   catalogoProfesionales: Profesional[] = [];
 
   ngOnInit(): void {
-    this.establecerRangoEsteMes();
+    this.establecerRangoEsteMes(false);
     this.cargarCatalogos();
     this.cargarReportes();
+  }
+
+  onLogout(): void {
+    this.confirmService
+      .confirm({
+        titulo: 'Cerrar Sesión',
+        mensaje: '¿Está seguro de que desea cerrar sesión?',
+        textoConfirmar: 'Cerrar Sesión',
+        tipo: 'danger',
+      })
+      .then((conf) => {
+        if (conf) {
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
+        }
+      });
   }
 
   private formatDate(date: Date): string {
@@ -512,11 +543,64 @@ export class ReportesComponent implements OnInit {
     return `${y}-${m}-${d}`;
   }
 
-  establecerRangoEsteMes(): void {
+  formatFecha(fecha?: string | Date): string {
+    if (!fecha) return '';
+    let y: number, m: number, d: number;
+    if (fecha instanceof Date) {
+      y = fecha.getUTCFullYear();
+      m = fecha.getUTCMonth() + 1;
+      d = fecha.getUTCDate();
+    } else if (typeof fecha === 'string') {
+      const clean = fecha.split('T')[0];
+      const parts = clean.split('-');
+      if (parts.length === 3) {
+        y = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10);
+        d = parseInt(parts[2], 10);
+      } else {
+        const dt = new Date(fecha);
+        y = dt.getFullYear();
+        m = dt.getMonth() + 1;
+        d = dt.getDate();
+      }
+    } else {
+      return '';
+    }
+
+    if (isNaN(y) || isNaN(m) || isNaN(d)) {
+      return '';
+    }
+
+    const dayStr = String(d).padStart(2, '0');
+    const monthStr = String(m).padStart(2, '0');
+    const yearStr = String(y).padStart(4, '0');
+    return `${dayStr}/${monthStr}/${yearStr}`;
+  }
+
+  establecerRangoHoy(): void {
+    const hoy = new Date();
+    this.fechaDesde = this.formatDate(hoy);
+    this.fechaHasta = this.formatDate(hoy);
+    this.cargarReportes();
+  }
+
+  establecerRangoUltimaSemana(): void {
+    const hoy = new Date();
+    const hace7 = new Date();
+    hace7.setDate(hoy.getDate() - 7);
+    this.fechaDesde = this.formatDate(hace7);
+    this.fechaHasta = this.formatDate(hoy);
+    this.cargarReportes();
+  }
+
+  establecerRangoEsteMes(recargar = true): void {
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     this.fechaDesde = this.formatDate(primerDia);
     this.fechaHasta = this.formatDate(hoy);
+    if (recargar) {
+      this.cargarReportes();
+    }
   }
 
   establecerRangoMesAnterior(): void {
@@ -633,7 +717,7 @@ export class ReportesComponent implements OnInit {
   limpiarFiltros(): void {
     this.especialidadId = null;
     this.profesionalId = null;
-    this.establecerRangoEsteMes();
+    this.establecerRangoEsteMes(false);
     this.cargarReportes();
   }
 }

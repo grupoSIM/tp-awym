@@ -142,6 +142,17 @@ export class AgendasService {
       baseWhere.id_agenda = { not: excludeAgendaId };
     }
 
+    const diasNombres: Record<number, string> = {
+      1: 'lunes',
+      2: 'martes',
+      3: 'miércoles',
+      4: 'jueves',
+      5: 'viernes',
+      6: 'sábado',
+      7: 'domingo',
+    };
+    const nombreDia = diasNombres[dia_semana] || `día ${dia_semana}`;
+
     // 1. Superposición del profesional
     const agendasProfesional = await tx.agenda.findMany({
       where: {
@@ -158,7 +169,7 @@ export class AgendasService {
       const aFin = this.timeToMinutes(a.hora_fin);
       if (minInicio < aFin && minFin > aIni) {
         const error: any = new Error(
-          `El profesional ya posee una agenda asignada los días ${dia_semana} en el rango ${a.hora_inicio} - ${a.hora_fin}`
+          `El profesional ya posee una agenda asignada los días ${nombreDia} en el rango ${a.hora_inicio} - ${a.hora_fin}`
         );
         error.status = 409;
         throw error;
@@ -178,7 +189,7 @@ export class AgendasService {
       const aFin = this.timeToMinutes(a.hora_fin);
       if (minInicio < aFin && minFin > aIni) {
         const error: any = new Error(
-          `El consultorio ya se encuentra ocupado los días ${dia_semana} en el rango ${a.hora_inicio} - ${a.hora_fin}`
+          `El consultorio ya se encuentra ocupado los días ${nombreDia} en el rango ${a.hora_inicio} - ${a.hora_fin}`
         );
         error.status = 409;
         throw error;

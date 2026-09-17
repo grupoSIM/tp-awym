@@ -823,6 +823,7 @@ export class MisTurnosComponent implements OnInit, OnDestroy {
 
   // Selector de sección / pestañas
   tabActivo: 'todos' | 'proximos' | 'historial' = 'proximos';
+  turnosModificadosRecientes = new Set<number>();
 
   // Modal Cancelación
   turnoACancelar: Turno | null = null;
@@ -914,6 +915,7 @@ export class MisTurnosComponent implements OnInit, OnDestroy {
 
   setTab(tab: 'todos' | 'proximos' | 'historial'): void {
     this.tabActivo = tab;
+    this.turnosModificadosRecientes.clear();
   }
 
   get tabNombreActivo(): string {
@@ -1095,11 +1097,13 @@ export class MisTurnosComponent implements OnInit, OnDestroy {
       const fechaT = this.parseDateOnly(t.fecha);
 
       if (this.tabActivo === 'proximos') {
-        if (t.estado !== 'CONFIRMADO' || fechaT < hoy) {
+        const reciente = this.turnosModificadosRecientes.has(t.id_turno);
+        if (!reciente && (t.estado !== 'CONFIRMADO' || fechaT < hoy)) {
           return false;
         }
       } else if (this.tabActivo === 'historial') {
-        if (t.estado === 'CONFIRMADO' && fechaT >= hoy) {
+        const reciente = this.turnosModificadosRecientes.has(t.id_turno);
+        if (!reciente && (t.estado === 'CONFIRMADO' && fechaT >= hoy)) {
           return false;
         }
       }
@@ -1249,11 +1253,18 @@ export class MisTurnosComponent implements OnInit, OnDestroy {
     this.successMessage = '';
 
     const motivo = this.motivoCancelacion.trim() || undefined;
-    this.turnosService.cancelarTurno(this.turnoACancelar.id_turno, motivo).subscribe({
+    const turnoId = this.turnoACancelar.id_turno;
+    const turnoRef = this.turnoACancelar;
+
+    this.turnosService.cancelarTurno(turnoId, motivo).subscribe({
       next: () => {
         this.setSuccessMessage('El turno ha sido cancelado con éxito.');
+        this.turnosModificadosRecientes.add(turnoId);
+        turnoRef.estado = 'CANCELADO';
+        this.turnos = this.turnos.map((t) =>
+          t.id_turno === turnoId ? { ...t, estado: 'CANCELADO' } : t
+        );
         this.cerrarModalCancelar();
-        this.cargarTurnos();
       },
       error: (err) => {
         this.setErrorMessage(err.error?.error || 'No se pudo cancelar el turno.');
@@ -1369,18 +1380,24 @@ export class MisTurnosComponent implements OnInit, OnDestroy {
       : '';
 
     const proceder = () => {
-      this.loading = true;
       this.errorMessage = '';
       this.successMessage = '';
 
+      this.turnosModificadosRecientes.add(turno.id_turno);
+      turno.estado = nuevoEstado;
+      this.turnos = this.turnos.map((t) => (t.id_turno === turno.id_turno ? { ...t, estado: nuevoEstado } : t));
+
       this.turnosService.actualizarEstado(turno.id_turno, { estado: nuevoEstado }).subscribe({
-        next: () => {
+        next: (res) => {
           this.setSuccessMessage(`Turno actualizado a ${nuevoEstado} exitosamente.`);
-          this.cargarTurnos();
+          if (res && res.estado) {
+            turno.estado = res.estado;
+            this.turnos = this.turnos.map((t) => (t.id_turno === turno.id_turno ? { ...t, estado: res.estado } : t));
+          }
         },
         error: (err) => {
           this.setErrorMessage(err.error?.error || `No se pudo actualizar el estado del turno a ${nuevoEstado}.`);
-          this.loading = false;
+          this.cargarTurnos();
         },
       });
     };
@@ -1421,40 +1438,32 @@ export class MisTurnosComponent implements OnInit, OnDestroy {
     let y: number, m: number, d: number;
     if (fecha instanceof Date) {
       y = fecha.getUTCFullYear();
-      m = fecha.getUTCMonth();
+      m = fecha.getUTCMonth() + 1;
       d = fecha.getUTCDate();
     } else if (typeof fecha === 'string') {
       const clean = fecha.split('T')[0];
       const parts = clean.split('-');
       if (parts.length === 3) {
         y = parseInt(parts[0], 10);
-        m = parseInt(parts[1], 10) - 1;
+        m = parseInt(parts[1], 10);
         d = parseInt(parts[2], 10);
       } else {
         const dt = new Date(fecha);
         y = dt.getFullYear();
-        m = dt.getMonth();
+        m = dt.getMonth() + 1;
         d = dt.getDate();
       }
     } else {
       return '';
     }
 
-    const dateObj = new Date(y, m, d);
-    const locale = (typeof navigator !== 'undefined' && (navigator.language || (navigator.languages && navigator.languages[0]))) || 'es-AR';
-
-    try {
-      return new Intl.DateTimeFormat(locale, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(dateObj);
-    } catch {
-      return new Intl.DateTimeFormat('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).format(dateObj);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) {
+      return '';
     }
+
+    const dayStr = String(d).padStart(2, '0');
+    const monthStr = String(m).padStart(2, '0');
+    const yearStr = String(y).padStart(4, '0');
+    return `${dayStr}/${monthStr}/${yearStr}`;
   }
 }

@@ -375,6 +375,7 @@ describe('Reportes e Indicadores de Gestión y Ausentismo (feat-007) Tests', () 
       expect(res.headers['content-type']).toContain('text/csv');
       expect(res.headers['content-disposition']).toContain('attachment; filename=');
       expect(res.text).toContain('REPORTE DE GESTIÓN Y AUSENTISMO');
+      expect(res.text).toContain('01/10/2026 hasta 31/10/2026');
       expect(res.text).toContain('RESUMEN GENERAL');
       expect(res.text).toContain('DESGLOSE POR ESPECIALIDAD');
       expect(res.text).toContain('DESGLOSE POR PROFESIONAL');

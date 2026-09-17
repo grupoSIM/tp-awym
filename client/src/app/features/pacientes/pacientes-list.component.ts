@@ -81,6 +81,11 @@ export class PacientesListComponent implements OnInit {
     }, 300);
   }
 
+  ejecutarBusquedaInmediata(): void {
+    clearTimeout(this.searchDebounceTimer);
+    this.cargarPacientes();
+  }
+
   onEstadoChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     this.estadoFiltro = select.value;

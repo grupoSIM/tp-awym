@@ -81,4 +81,10 @@ describe('AgendasListComponent', () => {
     expect(component.getNombreDia(1)).toBe('Lunes');
     expect(component.getNombreDia(5)).toBe('Viernes');
   });
+
+  it('debe formatear fechas en formato regional DD/MM/YYYY', () => {
+    expect(component.formatFecha('2026-09-16')).toBe('16/09/2026');
+    expect(component.formatFecha('2026-09-16T10:00:00Z')).toBe('16/09/2026');
+    expect(component.formatFecha('')).toBe('');
+  });
 });

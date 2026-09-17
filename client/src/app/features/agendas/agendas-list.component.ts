@@ -126,6 +126,40 @@ export class AgendasListComponent implements OnInit {
     return d ? d.nombre : `Día ${dia}`;
   }
 
+  formatFecha(fecha?: string | Date): string {
+    if (!fecha) return '';
+    let y: number, m: number, d: number;
+    if (fecha instanceof Date) {
+      y = fecha.getUTCFullYear();
+      m = fecha.getUTCMonth() + 1;
+      d = fecha.getUTCDate();
+    } else if (typeof fecha === 'string') {
+      const clean = fecha.split('T')[0];
+      const parts = clean.split('-');
+      if (parts.length === 3) {
+        y = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10);
+        d = parseInt(parts[2], 10);
+      } else {
+        const dt = new Date(fecha);
+        y = dt.getFullYear();
+        m = dt.getMonth() + 1;
+        d = dt.getDate();
+      }
+    } else {
+      return '';
+    }
+
+    if (isNaN(y) || isNaN(m) || isNaN(d)) {
+      return '';
+    }
+
+    const dayStr = String(d).padStart(2, '0');
+    const monthStr = String(m).padStart(2, '0');
+    const yearStr = String(y).padStart(4, '0');
+    return `${dayStr}/${monthStr}/${yearStr}`;
+  }
+
   toggleEstado(a: Agenda): void {
     const accion = a.activo ? 'desactivar' : 'activar';
     const tipoAccion = a.activo ? 'warning' : 'primary';

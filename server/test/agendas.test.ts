@@ -347,6 +347,7 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
         });
       expect(res.status).toBe(409);
       expect(res.body.error).toContain('profesional ya posee una agenda asignada');
+      expect(res.body.error).toContain('los días lunes');
     });
 
     it('debe rechazar superposición horaria del mismo consultorio con 409 (TEST-037)', async () => {
@@ -365,6 +366,37 @@ describe('Consultorios y Agendas Module Integration Tests', () => {
         });
       expect(res.status).toBe(409);
       expect(res.body.error).toContain('consultorio ya se encuentra ocupado');
+      expect(res.body.error).toContain('los días lunes');
+    });
+
+    it('debe indicar el nombre del día en el mensaje de error cuando el consultorio está ocupado en martes', async () => {
+      // Crear agenda profesional 1 en consultorio 2 día martes (2)
+      await request(app)
+        .post('/api/v1/agendas')
+        .set('Cookie', adminCookie)
+        .send({
+          id_profesional: testProfesionalId1,
+          id_consultorio: testConsultorioId2,
+          dia_semana: 2,
+          hora_inicio: '14:00',
+          hora_fin: '18:00',
+          duracion_minutos: 30,
+        });
+
+      // Intento en mismo consultorio 2 el mismo martes (2)
+      const res = await request(app)
+        .post('/api/v1/agendas')
+        .set('Cookie', adminCookie)
+        .send({
+          id_profesional: testProfesionalId2,
+          id_consultorio: testConsultorioId2,
+          dia_semana: 2,
+          hora_inicio: '15:00',
+          hora_fin: '17:00',
+          duracion_minutos: 30,
+        });
+      expect(res.status).toBe(409);
+      expect(res.body.error).toContain('consultorio ya se encuentra ocupado los días martes');
     });
 
     it('debe permitir crear agenda contigua sin solapamiento (TEST-037)', async () => {

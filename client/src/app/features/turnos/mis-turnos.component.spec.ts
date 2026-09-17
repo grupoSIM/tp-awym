@@ -107,6 +107,8 @@ describe('MisTurnosComponent - Filtros por campo y cancelacion', () => {
     ]);
     authServiceSpy = jasmine.createSpyObj('AuthService', ['logout', 'currentUser']);
 
+    mockTurnos[0].estado = 'CONFIRMADO';
+    mockTurnos[1].estado = 'CANCELADO';
     turnosServiceSpy.getTurnos.and.returnValue(of(mockTurnos));
     authServiceSpy.currentUser.and.returnValue({
       id: 1,
@@ -368,6 +370,8 @@ describe('MisTurnosComponent - Filtros por campo y cancelacion', () => {
     component.cambiarEstado(turno, 'AUSENTE');
     expect(turnosServiceSpy.actualizarEstado).toHaveBeenCalledWith(1, { estado: 'AUSENTE' });
     expect(component.successMessage).toContain('AUSENTE exitosamente');
+    expect(turno.estado).toBe('AUSENTE');
+    expect(component.turnos.find((t) => t.id_turno === 1)?.estado).toBe('AUSENTE');
   });
 
   // TEST-066: Accesibilidad WCAG 2.1 AA en modales de turnos
@@ -396,5 +400,13 @@ describe('MisTurnosComponent - Filtros por campo y cancelacion', () => {
     expect(component.filtrosAbiertos).toBeTrue();
     component.toggleFiltros();
     expect(component.filtrosAbiertos).toBeFalse();
+  });
+
+  it('debe formatear fechas en formato regional DD/MM/YYYY', () => {
+    expect(component.formatFecha('2026-09-16')).toBe('16/09/2026');
+    expect(component.formatFecha('2026-09-16T15:30:00.000Z')).toBe('16/09/2026');
+    expect(component.formatFecha(new Date(Date.UTC(2026, 8, 16)))).toBe('16/09/2026');
+    expect(component.formatFecha('')).toBe('');
+    expect(component.formatFecha(undefined)).toBe('');
   });
 });

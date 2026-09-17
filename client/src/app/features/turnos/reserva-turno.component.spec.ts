@@ -153,9 +153,9 @@ describe('ReservaTurnoComponent (TEST-053 / TEST-055)', () => {
     expect(compiled.querySelectorAll('[aria-live]').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('TEST-053: Debe formatear fechas al locale del usuario o Argentina y prevenir duplicación en misma agenda', () => {
-    expect(component.formatFecha('2026-09-16T00:00:00.000Z')).toContain('16');
-    expect(component.formatFecha('2026-09-16')).toContain('16');
+  it('TEST-053: Debe formatear fechas en formato estándar regional DD/MM/YYYY y prevenir duplicación en misma agenda', () => {
+    expect(component.formatFecha('2026-09-16T00:00:00.000Z')).toBe('16/09/2026');
+    expect(component.formatFecha('2026-09-16')).toBe('16/09/2026');
 
     component.turnosPaciente = [
       {
