@@ -9,11 +9,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { Profesional } from '../../core/models/profesional.model';
 import { Consultorio } from '../../core/models/consultorio.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-agenda-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent],
   templateUrl: './agenda-form.component.html',
 })
 export class AgendaFormComponent implements OnInit {

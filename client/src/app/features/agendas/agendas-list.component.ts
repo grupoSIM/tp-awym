@@ -11,11 +11,12 @@ import { ToastService } from '../../core/services/toast.service';
 import { Agenda } from '../../core/models/agenda.model';
 import { Profesional } from '../../core/models/profesional.model';
 import { Consultorio } from '../../core/models/consultorio.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-agendas-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
   templateUrl: './agendas-list.component.html',
 })
 export class AgendasListComponent implements OnInit {

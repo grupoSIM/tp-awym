@@ -7,11 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Especialidad } from '../../core/models/especialidad.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-especialidades',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
   templateUrl: './especialidades.component.html',
 })
 export class EspecialidadesComponent implements OnInit {

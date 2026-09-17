@@ -6,11 +6,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Paciente } from '../../core/models/paciente.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-pacientes-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NavbarComponent],
   templateUrl: './pacientes-list.component.html',
 })
 export class PacientesListComponent implements OnInit {

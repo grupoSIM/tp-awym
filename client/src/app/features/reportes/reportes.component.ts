@@ -12,34 +12,14 @@ import { IndicadoresResumen, DesgloseEspecialidad, DesgloseProfesional, FiltrosR
 import { Especialidad } from '../../core/models/especialidad.model';
 import { Profesional } from '../../core/models/profesional.model';
 
+import { NavbarComponent } from '../../core/components/navbar.component';
+
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-      <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
-          <span aria-hidden="true">⚕</span>
-          <span>Gestión de Turnos</span>
-        </a>
-
-        <div class="d-flex align-items-center gap-3 ms-auto">
-          @if (user()) {
-            <div class="text-white text-end d-none d-sm-block">
-              <div class="fw-semibold small">{{ user()?.nombre }} {{ user()?.apellido }}</div>
-              <span class="badge bg-light text-primary small">{{ user()?.rol }}</span>
-            </div>
-          }
-          <a routerLink="/dashboard" class="btn btn-outline-light btn-sm px-3">
-            Volver al Panel
-          </a>
-          <button type="button" class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-    </nav>
+    <app-navbar></app-navbar>
 
     <main id="main-content" class="container py-4">
       <nav aria-label="Ruta de navegación" class="mb-3">

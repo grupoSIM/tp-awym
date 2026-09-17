@@ -7,11 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Consultorio } from '../../core/models/consultorio.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-consultorios',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent],
   templateUrl: './consultorios.component.html',
 })
 export class ConsultoriosComponent implements OnInit {

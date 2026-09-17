@@ -8,11 +8,12 @@ import { ConfirmService } from '../../core/services/confirm.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Profesional } from '../../core/models/profesional.model';
 import { Especialidad } from '../../core/models/especialidad.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-profesionales-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NavbarComponent],
   templateUrl: './profesionales-list.component.html',
 })
 export class ProfesionalesListComponent implements OnInit {

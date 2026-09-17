@@ -7,11 +7,12 @@ import { EspecialidadesService } from '../../core/services/especialidades.servic
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { Especialidad } from '../../core/models/especialidad.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-profesional-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, NavbarComponent],
   templateUrl: './profesional-form.component.html',
 })
 export class ProfesionalFormComponent implements OnInit {

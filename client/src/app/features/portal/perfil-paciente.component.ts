@@ -6,28 +6,23 @@ import { PortalService } from '../../core/services/portal.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { PerfilPaciente } from '../../core/models/perfil-paciente.model';
+import { NavbarComponent } from '../../core/components/navbar.component';
 
 @Component({
   selector: 'app-perfil-paciente',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarComponent],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-      <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
-          <span aria-hidden="true">⚕</span>
-          <span>Gestión de Turnos</span>
-        </a>
-        <div class="d-flex align-items-center gap-3 ms-auto">
-          <a routerLink="/dashboard" class="btn btn-outline-light btn-sm px-3">Volver al Panel</a>
-          <button type="button" class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-    </nav>
+    <app-navbar></app-navbar>
 
     <main id="main-content" class="container py-4">
+      <nav aria-label="Ruta de navegación" class="mb-3">
+        <ol class="breadcrumb mb-0 small">
+          <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Mi Perfil</li>
+        </ol>
+      </nav>
+
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-7">
           <div class="card shadow-sm border-0 rounded-4 p-4">

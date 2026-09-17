@@ -1,28 +1,9 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-  <div class="container-fluid px-4">
-    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" routerLink="/dashboard" role="button">
-      <span aria-hidden="true">⚕</span>
-      <span>Gestión de Turnos</span>
-    </a>
-
-    <div class="d-flex align-items-center gap-3 ms-auto">
-      @if (user) {
-        <div class="text-white text-end d-none d-sm-block">
-          <div class="fw-semibold small">{{ user.nombre }} {{ user.apellido }}</div>
-          <span class="badge bg-light text-primary small">{{ user.rol }}</span>
-        </div>
-      }
-      <button class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
-        Cerrar Sesión
-      </button>
-    </div>
-  </div>
-</nav>
+<app-navbar></app-navbar>
 
 <main id="main-content" class="container py-4">
   <div class="row justify-content-center">
     <div class="col-12 col-lg-8">
-      <nav aria-label="breadcrumb">
+      <nav aria-label="Ruta de navegación">
         <ol class="breadcrumb mb-2 small">
           <li class="breadcrumb-item"><a routerLink="/dashboard" class="text-decoration-none">Inicio</a></li>
           <li class="breadcrumb-item"><a routerLink="/agendas" class="text-decoration-none">Agendas</a></li>
