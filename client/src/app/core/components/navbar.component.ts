@@ -23,11 +23,6 @@ import { ConfirmService } from '../services/confirm.service';
               <span class="badge bg-light text-primary small">{{ user.rol }}</span>
             </div>
           }
-          @if (showBackToPanel) {
-            <a [routerLink]="dashboardRoute" class="btn btn-outline-light btn-sm px-3">
-              Volver al Panel
-            </a>
-          }
           <button type="button" class="btn btn-outline-light btn-sm px-3" (click)="onLogout()">
             Cerrar Sesión
           </button>
@@ -37,8 +32,6 @@ import { ConfirmService } from '../services/confirm.service';
   `,
 })
 export class NavbarComponent {
-  @Input() showBackToPanel = true;
-
   private authService = inject(AuthService);
   private router = inject(Router);
   private confirmService = inject(ConfirmService);

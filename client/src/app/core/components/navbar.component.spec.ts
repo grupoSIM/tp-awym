@@ -59,17 +59,7 @@ describe('NavbarComponent', () => {
     expect(compiled.querySelector('.badge')?.textContent).toContain('ADMIN');
   });
 
-  it('debe mostrar el botón Volver al Panel cuando showBackToPanel es true', () => {
-    component.showBackToPanel = true;
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    const btnVolver = compiled.querySelector('a.btn-outline-light');
-    expect(btnVolver?.textContent).toContain('Volver al Panel');
-  });
-
-  it('debe ocultar el botón Volver al Panel cuando showBackToPanel es false', () => {
-    component.showBackToPanel = false;
-    fixture.detectChanges();
+  it('no debe renderizar el botón Volver al Panel ya que la navegación se realiza por logo o migas de pan', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const btnsVolver = Array.from(compiled.querySelectorAll('a.btn-outline-light')).filter(
       (el) => el.textContent?.includes('Volver al Panel')
